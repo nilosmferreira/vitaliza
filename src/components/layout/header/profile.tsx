@@ -7,7 +7,7 @@ export function Profile() {
   if (!user) {
     return <h1>Carregando...</h1>;
   }
-  const iniciais = `${user.primeiroNome.charAt(0)}${user.ultimoNome.charAt(0)}`;
+  const iniciais = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
   return (
     <div className='flex flex-row items-center'>
       <Avatar.Root className='relative inline-flex h-10 w-10 md:mr-2'>
@@ -22,7 +22,7 @@ export function Profile() {
         </Avatar.AvatarFallback>
       </Avatar.Root>
       <div className='hidden md:flex flex-col font-thin text-xs'>
-        <span className='text-gray-800'>{`${user.primeiroNome} ${user.ultimoNome}`}</span>
+        <span className='text-gray-800'>{`${user.firstName} ${user.lastName}`}</span>
         <span className='text-gray-600'>{user.email}</span>
       </div>
     </div>

@@ -12,14 +12,14 @@ import {
 } from 'react';
 
 type UserData = {
-  nomeUsuario: string;
-  primeiroNome: string;
-  ultimoNome: string;
+  firstName: string;
+  lastName: string;
+  userName: string;
   email: string;
 };
 type AuthContextType = {
   isAuthenticated: boolean;
-  signIn: (usuario: string, senha: string) => Promise<void>;
+  signIn: (username: string, password: string) => Promise<void>;
   user: UserData | undefined;
 };
 export const AuthContext = createContext({} as AuthContextType);
@@ -31,7 +31,6 @@ export const useAuth = () => {
   return useContext(AuthContext);
 };
 export function AuthProvider({ children }: AuthProviderProps) {
-  // const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<UserData>();
   const isAuthenticated = !!user;
 
@@ -52,11 +51,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
     }
   }, []);
-  const signIn = async (usuario: string, senha: string) => {
+  const signIn = async (username: string, password: string) => {
     try {
       const { data } = await api.post('/api/signin', {
-        usuario,
-        senha,
+        username,
+        password,
       });
       const { token } = data;
       api.defaults.headers.authorization = `Bearer ${token}`;
@@ -69,8 +68,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setCookie(undefined, 'vitaliza.token', token, {
         maxAge: 60 * 60 * 1, // 1 hora
       });
-
-      // setIsAuthenticated(true);
 
       Router.push('/controle');
     } catch (error) {

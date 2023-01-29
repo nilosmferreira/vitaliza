@@ -5,8 +5,8 @@ import { compareSync } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 
 const RequestBody = z.object({
-  usuario: z.string(),
-  senha: z.string(),
+  username: z.string(),
+  password: z.string(),
 });
 export default async function signin(
   req: NextApiRequest,
@@ -18,24 +18,24 @@ export default async function signin(
     return res.status(404).end();
   }
 
-  const { usuario, senha } = RequestBody.parse(req.body);
+  const { username, password } = RequestBody.parse(req.body);
 
-  const user = await prisma.usuario.findUnique({
+  const user = await prisma.user.findUnique({
     where: {
-      nomeUsuario: usuario,
+      userName: username,
     },
   });
 
-  if (!user || !compareSync(senha, user.senha)) {
+  if (!user || !compareSync(password, user.password)) {
     return res.status(400).json({ message: 'Usuário ou senha incorreto!' });
   }
-
+  const { firstName, lastName, email, userName } = user;
   const token = sign(
     {
-      nomeUsuario: user.nomeUsuario,
-      primeiroNome: user.primeiroNome,
-      ultimoNome: user.ultimoNome,
-      email: user.email,
+      firstName,
+      lastName,
+      userName,
+      email,
     },
     String(process.env.SECRET_JWT),
     {

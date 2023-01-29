@@ -10,15 +10,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Usuario {
-  id           String    @id
-  primeiroNome String
-  ultimoNome   String
-  nomeUsuario  String    @unique
-  senha        String
-  email        String    @unique
-  criadoEm     DateTime  @default(now())
-  deletadoEm   DateTime?
+model User {
+  id        String    @id
+  firstName String    @map("first_name")
+  lastName  String    @map("last_name")
+  userName  String    @unique @map("username")
+  password  String
+  email     String    @unique @map("created_at")
+  createdAt DateTime  @default(now()) @map("deleted_at")
+  deletedAt DateTime?
 
-  @@map("usuarios")
+  @@map("users")
 }

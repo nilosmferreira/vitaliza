@@ -10,17 +10,17 @@ export default async function me(req: NextApiRequest, res: NextApiResponse) {
   try {
     const userId = decodeToken(req);
 
-    const user = await prisma.usuario.findUnique({
+    const user = await prisma.user.findUnique({
       where: {
         id: userId,
       },
     });
     if (user) {
-      const { nomeUsuario, primeiroNome, ultimoNome, email } = user;
+      const { firstName, lastName, userName, email } = user;
       return res.status(200).json({
-        nomeUsuario,
-        primeiroNome,
-        ultimoNome,
+        firstName,
+        lastName,
+        userName,
         email,
       });
     } else {
