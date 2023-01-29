@@ -7,7 +7,7 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  const nilo = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: {
       email: 'nilo_ferreira@hotmail.com',
     },
@@ -19,6 +19,23 @@ async function main() {
       userName: 'niloferreira',
       password: hashSync('G!o301096@', 13),
       email: 'nilo_ferreira@hotmail.com',
+      createdAt: new Date(),
+    },
+  });
+  await prisma.user.upsert({
+    where: {
+      email: 'affinijr@gmail.com',
+    },
+    update: {
+      firstName: 'Antônio',
+    },
+    create: {
+      id: randomUUID(),
+      firstName: 'Antônio',
+      lastName: 'Affini',
+      userName: 'affini',
+      password: hashSync('vitaliza02', 13),
+      email: 'affinijr@gmail.com',
       createdAt: new Date(),
     },
   });

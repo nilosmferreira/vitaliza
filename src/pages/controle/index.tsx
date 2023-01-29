@@ -1,13 +1,14 @@
+import { DashboardUsuarios } from '@/components/dashboard/usuarios';
 import { Layout } from '@/components/layout';
-import { Header } from '@/components/layout/header';
-import { Sidebar } from '@/components/layout/sidebar';
 
 export default function Dashboard() {
   return (
     <Layout>
-      <h1>Dashboard</h1>
-      {/* <div className='flex flex-col flex-wrap sm:flex-row '>
+      <div className='flex flex-col flex-wrap sm:flex-row '>
         <div className='w-full sm:w-1/2 xl:w-1/3'>
+          <DashboardUsuarios />
+        </div>
+        {/* <div className='w-full sm:w-1/2 xl:w-1/3'>
           <div className='mb-4'>
             <div className='w-full p-4 bg-white shadow-lg rounded-2xl dark:bg-gray-700'>
               <div className='flex items-center justify-between mb-6'>
@@ -1010,8 +1011,8 @@ export default function Dashboard() {
               </ul>
             </div>
           </div>
-        </div>
-      </div> */}
+        </div> */}
+      </div>
     </Layout>
   );
 }
