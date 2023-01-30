@@ -58,16 +58,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         password,
       });
       const { token } = data;
-      api.defaults.headers.authorization = `Bearer ${token}`;
-
-      const decoded = decode(token, {
-        json: true,
-      }) as UserData;
-      setUser(decoded);
 
       setCookie(undefined, 'vitaliza.token', token, {
         maxAge: 60 * 60 * 1, // 1 hora
       });
+      const decoded = decode(token, {
+        json: true,
+      }) as UserData;
+      setUser(decoded);
 
       Router.push('/controle');
     } catch (error) {

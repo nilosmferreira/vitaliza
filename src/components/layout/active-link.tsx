@@ -12,7 +12,7 @@ interface DivChildrenProps extends HTMLProps<HTMLDivElement> {
 
 export function ActiveLink({
   children,
-  shouldMatchExactHref = true,
+  shouldMatchExactHref = false,
   ...rest
 }: ActiveLinkProps) {
   const { asPath } = useRouter();
