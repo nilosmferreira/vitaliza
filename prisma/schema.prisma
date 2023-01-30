@@ -22,3 +22,21 @@ model User {
 
   @@map("users")
 }
+
+// model Sport {
+//   id              String            @id
+//   name            String            @unique
+//   CategoriesSport CategoriesSport[]
+
+//   @@map("sports")
+// }
+
+// model CategoriesSport {
+//   id      String @id
+//   name    String @unique
+//   suit    Int
+//   sport   Sport  @relation(fields: [sportId], references: [id])
+//   sportId String @map("sport_id")
+
+//   @@map("categories_sport")
+// }

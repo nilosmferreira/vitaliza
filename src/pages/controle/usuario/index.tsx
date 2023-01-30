@@ -1,5 +1,179 @@
+import { Button } from '@/components/form/button';
+import { TextInput } from '@/components/form/text-input';
 import { Layout } from '@/components/layout';
+import { api } from '@/infra/axios';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import clsx from 'clsx';
+import Link from 'next/link';
+import {
+  FileSearch,
+  Heartbeat,
+  MagnifyingGlass,
+  PencilSimple,
+  Trash,
+} from 'phosphor-react';
+import { useState } from 'react';
 
+interface UsuarioData {
+  data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    createdAt: string;
+    deletedAt?: Date;
+    id: string;
+  }[];
+  count: number;
+  limit: number;
+  offset: number;
+}
+interface Response {
+  users: {
+    name: string;
+    email: string;
+    createdAt: Date;
+    isActive: boolean;
+  }[];
+  count: number;
+}
 export default function Usuario() {
-  return <Layout>Usuario</Layout>;
+  const [offset, setOffset] = useState(0);
+  const [perPage, setPerPage] = useState(5);
+  const [currentPage, setCurrentPage] = useState(0);
+  const queryClient = useQueryClient();
+
+  const { isLoading, data } = useQuery({
+    queryKey: [`list-user`],
+    queryFn: async () => {
+      const position = currentPage * perPage;
+      const { data } = await api.get<UsuarioData>('/api/controle/usuario', {
+        params: {
+          offset: position,
+          limit: perPage,
+        },
+      });
+      const users = data.data.map((user) => {
+        return {
+          id: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+          createdAt: new Date(user.createdAt),
+          isActive: !user.deletedAt,
+        };
+      });
+      return {
+        users,
+        count: data.count,
+      };
+    },
+  });
+  const handleToggleStatusUser = async (id: string, status: boolean) => {
+    try {
+      await api.patch(`/api/controle/usuario/${id}/toggle/${status}`);
+      await queryClient.invalidateQueries(['list-user']);
+    } catch (error) {}
+  };
+  return (
+    <Layout>
+      <div className='container  mx-auto px-2 sm:px4 max-w-4xlxl'>
+        <div className='py-4'>
+          <div className='flex flex-row justify-between w-full mb-1 sm:mb-0 '>
+            <h2 className='text-2xl leading-tight hidden md:block'>Usuários</h2>
+            <div className='flex justify-center  md:justify-end w-full'>
+              <form className='flex flex-row items-center md:justify-end gap-2  w-full '>
+                <div className=''>
+                  <TextInput.Root>
+                    <TextInput.Icon>
+                      <FileSearch />
+                    </TextInput.Icon>
+                    <TextInput.Input placeholder='Nome' />
+                  </TextInput.Root>
+                </div>
+                <Button variant='info'>
+                  <MagnifyingGlass />
+                </Button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div className='w-full bg-white max-h-[calc(100vh-15rem)] shadow-lg rounded-2xl dark:bg-gray-700'>
+          <div className='relative bg-green-100 rounded-xl overflow-auto'>
+            <div className='shadow-sm overflow-hidden my-8'>
+              <div className='table border-collapse table-auto w-full text-sm'>
+                <div className='table-header-group'>
+                  <div className='table-row'>
+                    <div className='table-cell border-b font-medium p-4 pl-8 pt-0 pb-3 text-slate-400  text-left'>
+                      Nome
+                    </div>
+                    <div className='md:table-cell hidden border-b font-medium p-4 pt-0 pb-3 text-slate-400  text-left'>
+                      e-Mail
+                    </div>
+                    <div className='md:table-cell hidden border-b font-medium p-4 pt-0 pb-3 text-slate-400  text-left'>
+                      Status
+                    </div>
+                    <div className='table-cell border-b font-medium p-4 pr-8 pt-0 pb-3 text-slate-400  text-left'>
+                      {' '}
+                    </div>
+                  </div>
+                </div>
+                <div className='table-row-group bg-white dark:bg-slate-800'>
+                  {data?.users?.map(({ id, name, email, isActive }) => (
+                    <div
+                      key={id}
+                      className='table-row'
+                    >
+                      <div className='table-cell border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400'>
+                        {name}
+                      </div>
+                      <div className='hidden md:table-cell border-b border-slate-100 dark:border-slate-700 p-4 text-slate-500 dark:text-slate-400'>
+                        {email}
+                      </div>
+                      <div className='hidden md:table-cell border-b border-slate-100 p-4 text-slate-500'>
+                        <span
+                          className={clsx(
+                            'px-2 py-1 rounded-full font-semibold',
+                            {
+                              'text-white bg-green-600': isActive,
+                              'text-white bg-red-600': !isActive,
+                            }
+                          )}
+                        >
+                          {isActive ? 'Ativo' : 'Bloqueado'}
+                        </span>
+                      </div>
+                      <div className='table-cell border-b border-slate-100  justify-end text-slate-500 '>
+                        <div className='p-4 flex flex-row h-full justify-end gap-2'>
+                          <Link href={`/controle/usuario/${id}`}>
+                            <PencilSimple
+                              size={20}
+                              className='text-blue-600'
+                            />
+                          </Link>
+                          <button
+                            onClick={() => handleToggleStatusUser(id, isActive)}
+                          >
+                            {isActive ? (
+                              <Trash
+                                size={20}
+                                className='text-red-600'
+                              />
+                            ) : (
+                              <Heartbeat
+                                size={20}
+                                className='text-green-600'
+                              />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
 }
