@@ -1,5 +1,4 @@
 import prisma from '@/infra/prisma';
-import { Prisma, User } from '@prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export default function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -23,6 +22,16 @@ export default function handle(req: NextApiRequest, res: NextApiResponse) {
         .findFirst({
           where: {
             email: value,
+          },
+        })
+        .then((result) => {
+          return res.status(200).json(result);
+        });
+    } else if (field === 'id') {
+      prisma.user
+        .findFirst({
+          where: {
+            id: value,
           },
         })
         .then((result) => {

@@ -110,6 +110,33 @@ export default async function Usuarios(
           offset,
           count,
         });
+      case 'PUT':
+        const updateUserData = z.object({
+          firstName: z.string({
+            required_error: 'Campo é obrigatório',
+          }),
+          lastName: z.string({
+            required_error: 'Campo é obrigatório',
+          }),
+          email: z
+            .string({
+              required_error: 'Campo é obrigatório',
+            })
+            .email({
+              message: 'Não é um e-mail válido',
+            }),
+        });
+        const updateData = updateUserData.parse(req.body);
+        await prisma.user.update({
+          where: {
+            email: updateData.email,
+          },
+          data: {
+            firstName: updateData.firstName,
+            lastName: updateData.lastName,
+          },
+        });
+        return res.status(201).end();
     }
   } catch (error) {
     if (error instanceof Error) return res.status(500).send(error.message);

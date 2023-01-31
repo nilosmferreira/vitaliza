@@ -8,7 +8,7 @@ export default function CRUDUsuario() {
   const { type } = router.query;
   // let currentPage = type === 'novo' ? 'add' : 'edit';
   const components = {
-    edit: <EditUser id='' />,
+    edit: <EditUser />,
     add: <AddUser />,
   };
   return <Layout>{components[type === 'novo' ? 'add' : 'edit']}</Layout>;

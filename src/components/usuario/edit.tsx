@@ -4,6 +4,11 @@ import { Label } from '../form/label';
 import { TextInput } from '../form/text-input';
 import { z } from 'zod';
 import { Button } from '../form/button';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/infra/axios';
+import { useRouter } from 'next/router';
+import { Loading } from '../loading';
+import clsx from 'clsx';
 
 interface EditUserProps {
   id: string;
@@ -23,21 +28,80 @@ const dataSchema = z.object({
       message: 'Não é um e-mail válido',
     }),
 });
-export function EditUser({ id }: EditUserProps) {
+type updateData = z.infer<typeof dataSchema>;
+export function EditUser() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { type } = router.query;
+  let id: string;
+  id = String(type);
+
+  const { mutate, isLoading: loadingMutation } = useMutation({
+    mutationFn: (data: updateData) => {
+      return api.put('/api/controle/usuario', data);
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries(['user']);
+    },
+  });
+
+  const { isLoading, data } = useQuery({
+    queryKey: [`user`],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get<updateData>(
+          `/api/controle/usuario/encontrar/id/${id}`
+        );
+        return {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+        };
+      } catch (error) {
+        return null;
+      }
+    },
+  });
+
   const {
     register,
     handleSubmit,
     setValue,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm<z.infer<typeof dataSchema>>({
-    mode: 'all',
     resolver: zodResolver(dataSchema),
+  });
+
+  if (isLoading) {
+    return (
+      <div className='container mx-auto px-2 sm:px-4 max-w-3xl '>
+        <div
+          className={clsx(
+            'relative h-container flex flex-col justify-between bg-white shadow-lg rounded-lg',
+            'overflow-hidden fill-green-600 items-center p-10'
+          )}
+        >
+          <Loading />
+        </div>
+      </div>
+    );
+  }
+  if (data) {
+    setValue('email', data.email);
+    setValue('firstName', data.firstName);
+    setValue('lastName', data.lastName);
+    setFocus('firstName');
+  }
+
+  const handleOnSubmit = handleSubmit((data) => {
+    mutate(data);
   });
   return (
     <div className='container mx-auto px-2 sm:px-4 max-w-3xl '>
       <h1 className='font-medium py-2'>Atualizar Usuário</h1>
       <form
-        // onSubmit={onSubmit}
+        onSubmit={handleOnSubmit}
         className='relative h-full flex flex-col justify-between bg-white shadow-lg rounded-lg overflow-hidden'
       >
         <div className='p-4 space-y-2'>
@@ -65,6 +129,7 @@ export function EditUser({ id }: EditUserProps) {
             <Label htmlFor='email'>e-mail</Label>
             <TextInput.Root error={errors['email']}>
               <TextInput.Input
+                disabled
                 {...register('email')}
                 type='email'
               />
@@ -75,6 +140,7 @@ export function EditUser({ id }: EditUserProps) {
           <Button
             variant='primary'
             type='submit'
+            isLoading={loadingMutation}
           >
             Gravar
           </Button>
