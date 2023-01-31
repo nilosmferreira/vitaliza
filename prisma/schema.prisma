@@ -23,6 +23,54 @@ model User {
   @@map("users")
 }
 
+model KindOfPerson {
+  id     String   @id
+  name   String
+  Person Person[]
+
+  @@map("type_persons")
+}
+
+model Address {
+  id              String            @id
+  zip             String
+  street          String
+  city            String
+  number          String?
+  complement      String?
+  distrinct       String?
+  createdAt       DateTime          @default(now()) @map("created_at")
+  deletedAt       DateTime?         @map("updated_at")
+  AddressesPerson AddressesPerson[]
+
+  @@map("addresses")
+}
+
+model AddressesPerson {
+  person    Person  @relation(fields: [personId], references: [id])
+  address   Address @relation(fields: [addressId], references: [id])
+  personId  String  @map("person_id")
+  addressId String  @map("address_id")
+
+  @@id([personId, addressId])
+}
+
+model Person {
+  id              String            @id
+  typePerson      KindOfPerson      @relation(fields: [typePersonId], references: [id])
+  typePersonId    String            @map("type_person_id")
+  name            String
+  corporateName   String?
+  surname         String?
+  email           String?
+  phone           String?
+  cellphone       String?
+  corporatePhone  String?           @map("corporate_phone")
+  AddressesPerson AddressesPerson[]
+
+  @@map("persons")
+}
+
 // model Sport {
 //   id              String            @id
 //   name            String            @unique
