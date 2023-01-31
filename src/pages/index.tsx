@@ -8,6 +8,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AuthContext } from '@/application/hooks/use-auth';
 import { Toast } from '@/components/toast';
 import { useRouter } from 'next/router';
+import LogoSVG from '../../public/logo.svg';
+import Image from 'next/image';
+import { Logo } from '@/components/logo';
 
 const formDataSchema = z.object({
   usuario: z
@@ -48,8 +51,11 @@ export default function Home() {
   return (
     <div className='h-screen w-screen bg-green-50 flex items-center justify-center'>
       <div className='relative container md:w-96 min-w-[320px]'>
-        <div className='absolute -top-6 flex items-center justify-center w-full'>
-          <Lock className='w-12 h-12 bg-white ring-4 ring-green-50 text-green-700 rounded-full' />
+        <div className='absolute -top-6 flex items-center justify-center  w-full'>
+          <div className='w-12 h-12 bg-white ring-4 ring-green-50 text-green-700 rounded-full'>
+            <Logo />
+          </div>
+          {/* <Lock className='w-12 h-12 bg-white ring-4 ring-green-50 text-green-700 rounded-full' /> */}
         </div>
         <form
           onSubmit={handleOnSubmit}

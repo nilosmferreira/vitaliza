@@ -1,11 +1,15 @@
+import { api } from '@/infra/axios';
+import prisma from '@/infra/prisma';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeSlash } from 'phosphor-react';
+import { AxiosError } from 'axios';
+import { Check, CheckCircle, Eye, EyeSlash, XCircle } from 'phosphor-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '../form/button';
 import { Label } from '../form/label';
 import { TextInput } from '../form/text-input';
+import { Toast } from '../toast';
 
 const dataSchema = z
   .object({
@@ -38,27 +42,98 @@ const dataSchema = z
     passwordConfirm: z.string({
       required_error: 'Campo é obrigatório',
     }),
-    roles: z.array(z.string()),
   })
   .refine((data) => data.password === data.passwordConfirm, {
     message: 'Senhas não conferem',
     path: ['password', 'passwordConfirm'],
   });
+
+interface FindFields {
+  userName?: string;
+  email?: string;
+}
 export function AddUser() {
   const [showPassword, setShowPassword] = useState(false);
+  const [message, setMessage] = useState<JSX.Element | null>(null);
+  const [username, setUsername] = useState<boolean | null>(null);
+  const [email, setEmail] = useState<boolean | null>(null);
   const {
     register,
     handleSubmit,
     setValue,
+    reset,
+    setFocus,
+    resetField,
+    setError,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<z.infer<typeof dataSchema>>({
-    mode: 'all',
     resolver: zodResolver(dataSchema),
   });
 
-  const handleOnSubmit = handleSubmit((data) => {
-    console.log(data);
-  });
+  const handleOnSubmit = handleSubmit(
+    async ({ email, firstName, lastName, userName, password }) => {
+      try {
+        await api.post('/api/controle/usuario', {
+          userName,
+          firstName,
+          lastName,
+          email,
+          password,
+        });
+        setMessage(
+          <span className='text-green-600 font-medium text-sm'>
+            Gravado com sucesso!
+          </span>
+        );
+        reset();
+      } catch (error) {
+        if (error instanceof AxiosError) {
+          setMessage(
+            <span className='text-red-600 font-medium text-sm'>
+              {error.response?.data.message}
+            </span>
+          );
+        }
+      }
+    }
+  );
+  const handleBlur = ({ userName, email }: FindFields) => {
+    if ((userName && userName.length > 0) || (email && email.length > 0)) {
+      api
+        .get(
+          `/api/controle/usuario/encontrar/${userName ? 'username' : 'email'}/${
+            userName ?? email
+          }`
+        )
+        .then((res) => {
+          const valid = res.data === null;
+          userName ? setUsername(valid) : setEmail(valid);
+          if (!valid) {
+            if (userName) {
+              setFocus('userName');
+              setError('userName', {
+                message: 'Usuário já existe!',
+              });
+            } else {
+              setFocus('email');
+              setError('email', {
+                message: 'email já existe!',
+              });
+            }
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    } else {
+      clearErrors('userName');
+      setUsername(null);
+      clearErrors('email');
+      setEmail(null);
+    }
+  };
+
   return (
     <div className='container mx-auto px-2 sm:px-4 max-w-3xl '>
       <h1 className='font-medium py-2'>Incluir Usuário</h1>
@@ -67,14 +142,33 @@ export function AddUser() {
         className='relative h-full flex flex-col justify-between bg-white shadow-lg rounded-lg overflow-hidden'
       >
         <div className='p-4 space-y-2'>
-          <div>
-            <Label htmlFor='userName'>Usuário</Label>
-            <TextInput.Root error={errors['userName']}>
-              <TextInput.Input
-                type='text'
-                {...register('userName')}
-              />
-            </TextInput.Root>
+          <div className='flex flex-row  gap-2'>
+            <div className='w-full'>
+              <Label htmlFor='userName'>Usuário</Label>
+              <TextInput.Root error={errors['userName']}>
+                <TextInput.Input
+                  type='text'
+                  {...register('userName', {
+                    onBlur: (ev) => handleBlur({ userName: ev.target.value }),
+                  })}
+                />
+              </TextInput.Root>
+            </div>
+            {username !== null ? (
+              username ? (
+                <CheckCircle
+                  size={30}
+                  weight='bold'
+                  className='text-green-700 mt-7'
+                />
+              ) : (
+                <XCircle
+                  size={30}
+                  weight='bold'
+                  className='text-red-700 mt-7'
+                />
+              )
+            ) : null}
           </div>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-2'>
             <div>
@@ -96,14 +190,33 @@ export function AddUser() {
               </TextInput.Root>
             </div>
           </div>
-          <div>
-            <Label htmlFor='email'>e-mail</Label>
-            <TextInput.Root error={errors['email']}>
-              <TextInput.Input
-                {...register('email')}
-                type='email'
-              />
-            </TextInput.Root>
+          <div className='flex flex-row  gap-2'>
+            <div className='w-full'>
+              <Label htmlFor='email'>e-mail</Label>
+              <TextInput.Root error={errors['email']}>
+                <TextInput.Input
+                  {...register('email', {
+                    onBlur: (ev) => handleBlur({ email: ev.target.value }),
+                  })}
+                  type='email'
+                />
+              </TextInput.Root>
+            </div>
+            {email !== null ? (
+              email ? (
+                <CheckCircle
+                  size={30}
+                  weight='bold'
+                  className='text-green-700 mt-7'
+                />
+              ) : (
+                <XCircle
+                  size={30}
+                  weight='bold'
+                  className='text-red-700 mt-7'
+                />
+              )
+            ) : null}
           </div>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-2'>
             <div>
@@ -149,6 +262,13 @@ export function AddUser() {
           </Button>
         </footer>
       </form>
+      <Toast
+        open={message !== null}
+        handleClose={() => setMessage(null)}
+        title='Novo Usuário'
+      >
+        {message}
+      </Toast>
     </div>
   );
 }
