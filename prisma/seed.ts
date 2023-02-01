@@ -39,6 +39,37 @@ async function main() {
       createdAt: new Date(),
     },
   });
+
+  await prisma.kindOfPerson.upsert({
+    where: {
+      name: 'colaborador',
+    },
+    update: {},
+    create: {
+      id: randomUUID(),
+      name: 'colaborador',
+    },
+  });
+  await prisma.kindOfPerson.upsert({
+    where: {
+      name: 'atleta',
+    },
+    update: {},
+    create: {
+      id: randomUUID(),
+      name: 'atleta',
+    },
+  });
+  await prisma.kindOfPerson.upsert({
+    where: {
+      name: 'responsavel',
+    },
+    update: {},
+    create: {
+      id: randomUUID(),
+      name: 'responsavel',
+    },
+  });
 }
 
 main()

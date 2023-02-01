@@ -25,7 +25,7 @@ model User {
 
 model KindOfPerson {
   id     String   @id
-  name   String
+  name   String   @unique
   Person Person[]
 
   @@map("type_persons")
@@ -53,6 +53,46 @@ model AddressesPerson {
   addressId String  @map("address_id")
 
   @@id([personId, addressId])
+  @@map("addresses_person")
+}
+
+model Contact {
+  id             String           @id
+  name           String
+  phone          String?
+  cellphone      String?
+  ContactsPerson ContactsPerson[]
+
+  @@map("contacts")
+}
+
+model ContactsPerson {
+  contact    Contact @relation(fields: [contact_id], references: [id])
+  person     Person  @relation(fields: [person_id], references: [id])
+  contact_id String
+  person_id  String
+
+  @@id([contact_id, person_id])
+  @@map("contacts_person")
+}
+
+model BankData {
+  id              String            @id
+  code            String            @map("code_bank")
+  agency          String
+  account         String
+  document        String
+  DatasBankPerson DatasBankPerson[]
+}
+
+model DatasBankPerson {
+  person       Person   @relation(fields: [person_id], references: [id])
+  data         BankData @relation(fields: [bank_data_id], references: [id])
+  person_id    String
+  bank_data_id String
+
+  @@id([person_id, bank_data_id])
+  @@map("datas_bank_person")
 }
 
 model Person {
@@ -60,31 +100,15 @@ model Person {
   typePerson      KindOfPerson      @relation(fields: [typePersonId], references: [id])
   typePersonId    String            @map("type_person_id")
   name            String
-  corporateName   String?
+  corporateName   String?           @map("corporate_name")
   surname         String?
   email           String?
   phone           String?
   cellphone       String?
   corporatePhone  String?           @map("corporate_phone")
   AddressesPerson AddressesPerson[]
+  ContactsPerson  ContactsPerson[]
+  DatasBankPerson DatasBankPerson[]
 
   @@map("persons")
 }
-
-// model Sport {
-//   id              String            @id
-//   name            String            @unique
-//   CategoriesSport CategoriesSport[]
-
-//   @@map("sports")
-// }
-
-// model CategoriesSport {
-//   id      String @id
-//   name    String @unique
-//   suit    Int
-//   sport   Sport  @relation(fields: [sportId], references: [id])
-//   sportId String @map("sport_id")
-
-//   @@map("categories_sport")
-// }
