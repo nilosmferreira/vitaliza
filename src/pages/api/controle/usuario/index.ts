@@ -126,6 +126,8 @@ export default async function Usuarios(
               message: 'Não é um e-mail válido',
             }),
         });
+
+        /*
         const updateData = updateUserData.parse(req.body);
         await prisma.user.update({
           where: {
@@ -136,6 +138,7 @@ export default async function Usuarios(
             lastName: updateData.lastName,
           },
         });
+        */
         return res.status(201).end();
     }
   } catch (error) {
