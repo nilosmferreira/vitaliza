@@ -1,6 +1,8 @@
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
+import * as Avatar from '@radix-ui/react-avatar';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Transition } from '@headlessui/react';
+
 import Cropper from 'react-easy-crop';
 import { Area } from 'react-easy-crop/types';
 import { useForm } from 'react-hook-form';
@@ -19,11 +21,14 @@ import {
   ChangeEventHandler,
   Fragment,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from 'react';
 import { ArrowsClockwise, TrashSimple, X } from 'phosphor-react';
-import getCroppedImg from '@/application/shared/crop-image';
+import getCroppedImg, {
+  GetCroppedImgResponse,
+} from '@/application/shared/crop-image';
 
 interface EditUserProps {
   id: string;
@@ -51,6 +56,9 @@ export function EditUser() {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(1);
+  const [imageCroped, setImageCroped] = useState<GetCroppedImgResponse | null>(
+    null
+  );
 
   const onCropComplete = useCallback(
     async (croppedArea: Area, croppedAreaPixels: Area) => {
@@ -62,10 +70,13 @@ export function EditUser() {
     try {
       if (image && croppedArea) {
         const croppedImage = await getCroppedImg(String(image), croppedArea, 0);
+        setImageCroped(croppedImage);
         return croppedImage;
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsOpen(false);
     }
   }, [croppedArea, image]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -150,6 +161,7 @@ export function EditUser() {
   const handleOnSubmit = handleSubmit((data) => {
     mutate(data);
   });
+
   return (
     <div className='container mx-auto px-2 sm:px-4 max-w-3xl '>
       <h1 className='font-medium py-2'>Atualizar Usuário</h1>
@@ -160,7 +172,6 @@ export function EditUser() {
         multiple={false}
         hidden
         onChange={onSelectFile}
-        style={{ display: 'none' }}
       />
 
       <form
@@ -171,7 +182,16 @@ export function EditUser() {
           <div className='mt-4 flex items-center justify-center  w-full cursor-pointer'>
             <DropdownMenuPrimitive.Trigger asChild>
               <div className='w-20 h-20 text-cyan-800 border bg-green-50 rounded-full'>
-                <PessoaIcon />
+                {imageCroped && imageCroped.file ? (
+                  <Avatar.Root>
+                    <Avatar.AvatarImage
+                      src={URL.createObjectURL(imageCroped.file)}
+                      className='rounded-full'
+                    />
+                  </Avatar.Root>
+                ) : (
+                  <PessoaIcon />
+                )}
               </div>
             </DropdownMenuPrimitive.Trigger>
             <DropdownMenuPrimitive.Portal>
@@ -267,10 +287,10 @@ export function EditUser() {
               />
             </Dialog.Close>
             <Dialog.Title className='text-3xl leading-tight font-extrabold'>
-              Criar hábito
+              Avatar
             </Dialog.Title>
-            <div>
-              <div className='flex bg-white mt-10 h-96 relative gap-2'>
+            <div className='flex flex-col gap-4'>
+              <div className='flex bg-white mt-10 h-80 relative '>
                 <Cropper
                   cropShape='round'
                   image={String(image)}
@@ -293,6 +313,7 @@ export function EditUser() {
                 <input
                   type='range'
                   value={zoom}
+                  placeholder='zoom'
                   min={1}
                   max={5}
                   step={0.1}
@@ -306,6 +327,7 @@ export function EditUser() {
                 <input
                   type='range'
                   value={rotation}
+                  placeholder='rotação'
                   min={1}
                   max={360}
                   step={1}
@@ -313,14 +335,19 @@ export function EditUser() {
                   onChange={(e) => {
                     setRotation(+e.target.value);
                   }}
-                  className='zoom-range'
+                  className='rotacao-range'
                 />
               </div>
             </div>
-            <footer className='flex w-full border items-center justify-evenly gap-2'>
+            <footer className='flex w-full items-center justify-evenly mt-4 gap-2'>
               <Button variant='primary'>Trocar</Button>
               <Button variant='danger'>Cancelar</Button>
-              <Button variant='success'>Cortar</Button>
+              <Button
+                variant='success'
+                onClick={() => showCroppedImage()}
+              >
+                Cortar
+              </Button>
             </footer>
           </Dialog.Content>
         </Dialog.Portal>

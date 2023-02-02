@@ -26,7 +26,7 @@ export function rotateSize(width: number, height: number, rotation: number) {
       Math.abs(Math.sin(rotRad) * width) + Math.abs(Math.cos(rotRad) * height),
   };
 }
-interface GetCroppedImgResponse {
+export interface GetCroppedImgResponse {
   file: Blob | null;
   url: string | null;
 }
@@ -51,8 +51,8 @@ export default async function getCroppedImg(
 
   // calculate bounding box of the rotated image
   const { width: bBoxWidth, height: bBoxHeight } = rotateSize(
-    image.width,
-    image.height,
+    image.width + 10,
+    image.height + 10,
     rotation
   );
 
