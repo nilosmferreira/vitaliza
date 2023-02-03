@@ -29,13 +29,14 @@ export default async function signin(
   if (!user || !compareSync(password, user.password)) {
     return res.status(400).json({ message: 'Usuário ou senha incorreto!' });
   }
-  const { firstName, lastName, email, userName } = user;
+  const { firstName, lastName, email, userName, avatar } = user;
   const token = sign(
     {
       firstName,
       lastName,
       userName,
       email,
+      avatar,
     },
     String(process.env.SECRET_JWT),
     {

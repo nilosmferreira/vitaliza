@@ -38,7 +38,11 @@ const dataSchema = z.object({
   lastName: z.string({
     required_error: 'Campo é obrigatório',
   }),
-  avatar: z.string().nullable(),
+  avatar: z
+    .string()
+    .nullish()
+    .nullable()
+    .transform((value) => value ?? null),
   email: z
     .string({
       required_error: 'Campo é obrigatório',
@@ -50,23 +54,23 @@ const dataSchema = z.object({
 type updateData = z.infer<typeof dataSchema>;
 export function EditUser() {
   const [isOpen, setIsOpen] = useState(false);
-
   const [image, setImage] = useState<File>();
   const [croppedArea, setCroppedArea] = useState<Area | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
   const [imageCroped, setImageCroped] = useState<GetCroppedImgResponse | null>(
     null
   );
 
-  const onCropComplete = useCallback(
-    async (croppedArea: Area, croppedAreaPixels: Area) => {
-      setCroppedArea(croppedAreaPixels);
-    },
-    []
-  );
-  const showCroppedImage = useCallback(async () => {
+  const onCropComplete = async (croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedArea(croppedAreaPixels);
+  };
+  const showCroppedImage = async () => {
     try {
       if (image && croppedArea) {
         const croppedImage = await getCroppedImg(
@@ -82,26 +86,13 @@ export function EditUser() {
     } finally {
       setIsOpen(false);
     }
-  }, [croppedArea, image]);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
-  const queryClient = useQueryClient();
+  };
   const { type } = router.query;
   let id: string;
   id = String(type);
 
   const { mutate, isLoading: loadingMutation } = useMutation({
     mutationFn: (data: FormData) => {
-      // const form = new FormData();
-      // form.append('data', JSON.stringify(data));
-      // if (imageCroped && imageCroped.file && image) {
-      //   form.append(
-      //     'avatar',
-      //     new File([imageCroped.file], image?.name, {
-      //       type: image.type,
-      //     })
-      //   );
-      // }
       return api.put('/api/controle/usuario', data, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -160,9 +151,8 @@ export function EditUser() {
     setValue('email', data?.email);
     setValue('firstName', data?.firstName);
     setValue('lastName', data?.lastName);
-    if (data.avatar) {
-    }
   }
+
   const onSelectFile: ChangeEventHandler<HTMLInputElement> = (event) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
@@ -172,6 +162,7 @@ export function EditUser() {
   };
 
   const handleOnSubmit = handleSubmit((data) => {
+    console.log('oi');
     const form = new FormData();
     form.append('data', JSON.stringify(data));
     if (imageCroped && imageCroped.file && image) {

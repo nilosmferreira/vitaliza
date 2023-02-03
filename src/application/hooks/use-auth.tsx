@@ -47,9 +47,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .then((res) => {
           setUser(res.data);
         })
-        .catch((error) => {
-          console.log(error);
-        });
+        .catch((error) => {});
     }
   }, []);
   const signIn = async (username: string, password: string) => {
