@@ -1,42 +1,48 @@
 import prisma from '@/infra/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 
-export default function handle(req: NextApiRequest, res: NextApiResponse) {
+export default async function handle(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const { method } = req;
   if (method === 'GET') {
     const [field, value] = req.query.params as string[];
     if (!value) return res.status(400).end();
 
     if (field === 'username') {
-      prisma.user
-        .findFirst({
+      try {
+        const result = await prisma.user.findFirst({
           where: {
             userName: value,
           },
-        })
-        .then((result) => {
-          return res.status(200).json(result);
         });
+        return res.status(200).json(result);
+      } catch (error) {
+        return res.status(400).json(error);
+      }
     } else if (field === 'email') {
-      prisma.user
-        .findFirst({
+      try {
+        const result = await prisma.user.findFirst({
           where: {
             email: value,
           },
-        })
-        .then((result) => {
-          return res.status(200).json(result);
         });
+        return res.status(200).json(result);
+      } catch (error) {
+        return res.status(400).json(error);
+      }
     } else if (field === 'id') {
-      prisma.user
-        .findFirst({
+      try {
+        const result = await prisma.user.findFirst({
           where: {
             id: value,
           },
-        })
-        .then((result) => {
-          return res.status(200).json(result);
         });
+        return res.status(200).json(result);
+      } catch (error) {
+        return res.status(400).json(error);
+      }
     }
   }
 }

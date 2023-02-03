@@ -1,8 +1,6 @@
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import * as Avatar from '@radix-ui/react-avatar';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Transition } from '@headlessui/react';
-
 import Cropper from 'react-easy-crop';
 import { Area } from 'react-easy-crop/types';
 import { useForm } from 'react-hook-form';
@@ -40,6 +38,7 @@ const dataSchema = z.object({
   lastName: z.string({
     required_error: 'Campo é obrigatório',
   }),
+  avatar: z.string().nullable(),
   email: z
     .string({
       required_error: 'Campo é obrigatório',
@@ -51,7 +50,8 @@ const dataSchema = z.object({
 type updateData = z.infer<typeof dataSchema>;
 export function EditUser() {
   const [isOpen, setIsOpen] = useState(false);
-  const [image, setImage] = useState<string | ArrayBuffer | null>(null);
+
+  const [image, setImage] = useState<File>();
   const [croppedArea, setCroppedArea] = useState<Area | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -69,7 +69,11 @@ export function EditUser() {
   const showCroppedImage = useCallback(async () => {
     try {
       if (image && croppedArea) {
-        const croppedImage = await getCroppedImg(String(image), croppedArea, 0);
+        const croppedImage = await getCroppedImg(
+          URL.createObjectURL(image),
+          croppedArea,
+          0
+        );
         setImageCroped(croppedImage);
         return croppedImage;
       }
@@ -87,7 +91,17 @@ export function EditUser() {
   id = String(type);
 
   const { mutate, isLoading: loadingMutation } = useMutation({
-    mutationFn: (data: updateData) => {
+    mutationFn: (data: FormData) => {
+      // const form = new FormData();
+      // form.append('data', JSON.stringify(data));
+      // if (imageCroped && imageCroped.file && image) {
+      //   form.append(
+      //     'avatar',
+      //     new File([imageCroped.file], image?.name, {
+      //       type: image.type,
+      //     })
+      //   );
+      // }
       return api.put('/api/controle/usuario', data, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -110,6 +124,7 @@ export function EditUser() {
           firstName: data.firstName,
           lastName: data.lastName,
           email: data.email,
+          avatar: data.avatar,
         };
       } catch (error) {
         return null;
@@ -142,24 +157,39 @@ export function EditUser() {
     );
   }
   if (data) {
-    setValue('email', data.email);
-    setValue('firstName', data.firstName);
-    setValue('lastName', data.lastName);
-    setFocus('firstName');
+    setValue('email', data?.email);
+    setValue('firstName', data?.firstName);
+    setValue('lastName', data?.lastName);
+    if (data.avatar) {
+    }
   }
   const onSelectFile: ChangeEventHandler<HTMLInputElement> = (event) => {
     if (event.target.files && event.target.files.length > 0) {
-      const reader = new FileReader();
-      reader.readAsDataURL(event.target.files[0]);
-      reader.addEventListener('load', () => {
-        setImage(reader.result);
-        setIsOpen(true);
-      });
+      const file = event.target.files[0];
+      setImage(file);
+      setIsOpen(true);
     }
   };
-  const handleChangeAvatar = () => {};
+
   const handleOnSubmit = handleSubmit((data) => {
-    mutate(data);
+    const form = new FormData();
+    form.append('data', JSON.stringify(data));
+    if (imageCroped && imageCroped.file && image) {
+      form.append(
+        'avatar',
+        new File([imageCroped.file], image?.name, {
+          type: image.type,
+        })
+      );
+    }
+    mutate(form, {
+      onSuccess: (data) => {
+        console.log(data);
+      },
+      onError: (e) => {
+        console.log(e);
+      },
+    });
   });
 
   return (
@@ -182,10 +212,14 @@ export function EditUser() {
           <div className='mt-4 flex items-center justify-center  w-full cursor-pointer'>
             <DropdownMenuPrimitive.Trigger asChild>
               <div className='w-20 h-20 text-cyan-800 border bg-green-50 rounded-full'>
-                {imageCroped && imageCroped.file ? (
+                {(imageCroped && imageCroped.file) || data?.avatar ? (
                   <Avatar.Root>
                     <Avatar.AvatarImage
-                      src={URL.createObjectURL(imageCroped.file)}
+                      src={
+                        imageCroped?.file
+                          ? URL.createObjectURL(imageCroped.file)
+                          : `/api/avatar/${data?.avatar}`
+                      }
                       className='rounded-full'
                     />
                   </Avatar.Root>
@@ -290,11 +324,10 @@ export function EditUser() {
               Avatar
             </Dialog.Title>
             <div className='flex flex-col gap-4'>
-              <div className='flex bg-white mt-10 h-80 relative '>
+              <div className='flex bg-white mt-10 relative h-60 '>
                 <Cropper
                   cropShape='round'
-                  image={String(image)}
-                  // image='https://img.huffingtonpost.com/asset/5ab4d4ac2000007d06eb2c56.jpeg?cache=sih0jwle4e&ops=1910_1000'
+                  image={image ? URL.createObjectURL(image) : ''}
                   crop={crop}
                   zoom={zoom}
                   rotation={rotation}

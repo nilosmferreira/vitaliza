@@ -20,6 +20,14 @@ export function Profile() {
             {iniciais}
           </span>
         </Avatar.AvatarFallback>
+        {user.avatar && (
+          <Avatar.AvatarImage
+            src={`/api/avatar/${user.avatar}`}
+            className={clsx(
+              'flex h-full w-full items-center justify-center bg-green-600 rounded-full '
+            )}
+          />
+        )}
       </Avatar.Root>
       <div className='hidden md:flex flex-col font-thin text-xs'>
         <span className='text-gray-800'>{`${user.firstName} ${user.lastName}`}</span>

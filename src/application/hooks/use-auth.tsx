@@ -16,6 +16,7 @@ type UserData = {
   lastName: string;
   userName: string;
   email: string;
+  avatar?: string;
 };
 type AuthContextType = {
   isAuthenticated: boolean;

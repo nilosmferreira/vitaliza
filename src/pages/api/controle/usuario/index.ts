@@ -1,5 +1,7 @@
+import { sendingS3Amazon } from '@/application/shared/sending-s3-amazon';
 import prisma from '@/infra/prisma';
 import { hashSync } from 'bcrypt';
+import formidable from 'formidable';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -18,7 +20,11 @@ const RequestQuerySchema = z.object({
       return value ? +value : 0;
     }),
 });
-
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 export default async function Usuarios(
   req: NextApiRequest,
   res: NextApiResponse
@@ -126,19 +132,56 @@ export default async function Usuarios(
               message: 'Não é um e-mail válido',
             }),
         });
+        console.log('passando');
 
-        /*
-        const updateData = updateUserData.parse(req.body);
-        await prisma.user.update({
-          where: {
-            email: updateData.email,
-          },
-          data: {
-            firstName: updateData.firstName,
-            lastName: updateData.lastName,
-          },
+        const form = new formidable.IncomingForm();
+        form.parse(req, async (error, fields, files) => {
+          if (error) {
+            return res.status(400).json(error);
+          }
+          console.log('passando');
+          if (fields['data']) {
+            const { firstName, lastName, email } = updateUserData.parse(
+              JSON.parse(String(fields['data']))
+            );
+            let avatar: string = '';
+            if (files['avatar']) {
+              const file = files['avatar'] as formidable.File;
+              const result = await sendingS3Amazon(file);
+              avatar = result.fileName;
+            }
+
+            if (avatar.length > 0) {
+              await prisma.user.update({
+                where: {
+                  email,
+                },
+                data: {
+                  firstName,
+                  lastName,
+                  avatar,
+                  UserAvatars: {
+                    create: {
+                      avatar,
+                    },
+                  },
+                },
+              });
+            } else {
+              await prisma.user.update({
+                where: {
+                  email,
+                },
+                data: {
+                  firstName,
+                  lastName,
+                },
+              });
+            }
+          }
+
+          return res.status(201).end();
         });
-        */
         return res.status(201).end();
     }
   } catch (error) {

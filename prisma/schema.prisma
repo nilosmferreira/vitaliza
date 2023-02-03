@@ -11,16 +11,27 @@ datasource db {
 }
 
 model User {
-  id        String    @id
-  firstName String    @map("first_name")
-  lastName  String    @map("last_name")
-  userName  String    @unique @map("username")
-  password  String
-  email     String    @unique @map("created_at")
-  createdAt DateTime  @default(now()) @map("deleted_at")
-  deletedAt DateTime?
+  id          String        @id
+  firstName   String        @map("first_name")
+  lastName    String        @map("last_name")
+  userName    String        @unique @map("username")
+  password    String
+  email       String        @unique @map("created_at")
+  createdAt   DateTime      @default(now()) @map("deleted_at")
+  deletedAt   DateTime?
+  avatar      String?
+  UserAvatars UserAvatars[]
 
   @@map("users")
+}
+
+model UserAvatars {
+  user   User   @relation(fields: [userId], references: [id])
+  avatar String
+  userId String @map("user_id")
+
+  @@id([avatar, userId])
+  @@map("user_avatars")
 }
 
 model KindOfPerson {

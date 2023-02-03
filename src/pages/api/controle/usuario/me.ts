@@ -16,12 +16,13 @@ export default async function me(req: NextApiRequest, res: NextApiResponse) {
       },
     });
     if (user) {
-      const { firstName, lastName, userName, email } = user;
+      const { firstName, lastName, userName, email, avatar } = user;
       return res.status(200).json({
         firstName,
         lastName,
         userName,
         email,
+        avatar,
       });
     } else {
       return res.status(400).json({ message: 'Usuário não encontrado!' });
