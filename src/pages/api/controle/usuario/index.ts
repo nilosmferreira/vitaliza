@@ -1,4 +1,5 @@
 import { sendingS3Amazon } from '@/application/shared/sending-s3-amazon';
+import { RequestQuerySchema } from '@/helpers/request-query-schema';
 import prisma from '@/infra/prisma';
 import { hashSync } from 'bcrypt';
 import formidable from 'formidable';
@@ -6,25 +7,6 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
-const RequestQuerySchema = z.object({
-  limit: z
-    .string()
-    .nullish()
-    .transform((value) => {
-      return value ? +value : 10;
-    }),
-  offset: z
-    .string()
-    .nullish()
-    .transform((value) => {
-      return value ? +value : 0;
-    }),
-});
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
 export default async function Usuarios(
   req: NextApiRequest,
   res: NextApiResponse
