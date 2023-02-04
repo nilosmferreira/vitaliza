@@ -20,7 +20,13 @@ export interface TextInputRoot {
 function Root({ children, error }: TextInputRoot) {
   return (
     <>
-      <div className='flex items-center gap-3 py-2 px-3 rounded-md border border-gray-600 bg-gray-100 w-full focus-within:outline-none  focus-within:ring-1 focus-within:ring-blue-600 focus-within:border-transparent'>
+      <div
+        className={clsx(
+          'flex items-center gap-3 py-2 px-3 rounded-md border border-gray-600',
+          'bg-gray-100 w-full focus-within:outline-none  focus-within:ring-1',
+          'focus-within:ring-blue-600 focus-within:border-transparent'
+        )}
+      >
         {children}
       </div>
       {error ? (
@@ -53,8 +59,10 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, TextInputProps> = (
   return (
     <input
       ref={ref}
-      className='bg-transparent flex-1 text-gray-700 placeholder:text-gray-400 outline-none disabled:text-gray-400 disabled:cursor-not-allowed 
-  '
+      className={clsx(
+        'bg-transparent flex-1 outline-none text-gray-700 placeholder:text-gray-400',
+        'disabled:text-slate-500 disabled:cursor-not-allowed marker:bg-transparent'
+      )}
       {...props}
     />
   );

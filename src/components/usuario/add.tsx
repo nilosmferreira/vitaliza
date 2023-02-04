@@ -1,8 +1,7 @@
 import { api } from '@/infra/axios';
-import prisma from '@/infra/prisma';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
-import { Check, CheckCircle, Eye, EyeSlash, XCircle } from 'phosphor-react';
+import { CheckCircle, Eye, EyeSlash, XCircle } from 'phosphor-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';

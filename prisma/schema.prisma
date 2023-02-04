@@ -107,19 +107,38 @@ model DatasBankPerson {
 }
 
 model Person {
-  id              String            @id
-  typePerson      KindOfPerson      @relation(fields: [typePersonId], references: [id])
-  typePersonId    String            @map("type_person_id")
-  name            String
-  corporateName   String?           @map("corporate_name")
-  surname         String?
-  email           String?
-  phone           String?
-  cellphone       String?
-  corporatePhone  String?           @map("corporate_phone")
-  AddressesPerson AddressesPerson[]
-  ContactsPerson  ContactsPerson[]
-  DatasBankPerson DatasBankPerson[]
+  id                String              @id
+  typePerson        KindOfPerson        @relation(fields: [typePersonId], references: [id])
+  typePersonId      String              @map("type_person_id")
+  name              String
+  corporateName     String?             @map("corporate_name")
+  surname           String?
+  email             String?
+  phone             String?
+  cellphone         String?
+  corporatePhone    String?             @map("corporate_phone")
+  AddressesPerson   AddressesPerson[]
+  ContactsPerson    ContactsPerson[]
+  DatasBankPerson   DatasBankPerson[]
+  occupationsPerson OccupationsPerson[]
 
   @@map("persons")
+}
+
+model Occupation {
+  id                String              @id
+  name              String              @unique
+  occupationsPerson OccupationsPerson[]
+
+  @@map("occupations")
+}
+
+model OccupationsPerson {
+  person       Person     @relation(fields: [personId], references: [id])
+  occupation   Occupation @relation(fields: [occupationId], references: [id])
+  personId     String     @map("person_id")
+  occupationId String     @map("occupation_id")
+
+  @@id([personId, occupationId])
+  @@map("occupations_person")
 }
