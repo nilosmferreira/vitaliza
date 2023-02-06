@@ -2,6 +2,13 @@ import { RequestQuerySchema } from '@/helpers/request-query-schema';
 import prisma from '@/infra/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 
+const config = {
+  api: {
+    Headers: {
+      bodyParser: false,
+    },
+  },
+};
 export default async function handle(
   req: NextApiRequest,
   res: NextApiResponse

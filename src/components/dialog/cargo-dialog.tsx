@@ -2,31 +2,45 @@ import { api } from '@/infra/axios';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Checkbox from '@radix-ui/react-checkbox';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import * as ScrollArea from '@radix-ui/react-scroll-area';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, X } from 'phosphor-react';
 import { useForm } from 'react-hook-form';
-import { boolean, z } from 'zod';
+import { z } from 'zod';
 import { FormPadrao } from '../form-padrao';
 import { Button } from '../form/button';
 import { Label } from '../form/label';
 import { TextInput } from '../form/text-input';
+import clsx from 'clsx';
 const cargoSchema = z.object({
   nome: z.string(),
 });
 
-type cargo = z.infer<typeof cargoSchema>;
+type Cargo = z.infer<typeof cargoSchema>;
 interface CargoDialogProps {
   isOpen: boolean;
   setIsOpen: (value: boolean) => void;
+  occupations: Array<string>;
+  onOccupationsChange: (cargo: { nome: string }) => void;
 }
-export function CargoDialog({ isOpen, setIsOpen }: CargoDialogProps) {
+
+interface RequestPostCargo {
+  nome: string;
+}
+export function CargoDialog({
+  isOpen,
+  setIsOpen,
+  occupations,
+  onOccupationsChange,
+}: CargoDialogProps) {
+  const queryClient = useQueryClient();
   const {
     clearErrors,
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm({
+  } = useForm<Cargo>({
     resolver: zodResolver(cargoSchema),
   });
   const { data: cargos, isLoading: isLoadingQuery } = useQuery({
@@ -45,10 +59,15 @@ export function CargoDialog({ isOpen, setIsOpen }: CargoDialogProps) {
       }
     },
   });
-  useMutation({
-    mutationFn: (data) => {},
+  const { mutate } = useMutation({
+    mutationFn: (data: RequestPostCargo) =>
+      api.post('/api/controle/cargo', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['lista-cargos']);
+      reset();
+    },
   });
-  const onSubmit = handleSubmit((data) => console.log(data));
+  const onSubmit = handleSubmit((data) => mutate(data));
   return (
     <Dialog.Root
       open={isOpen}
@@ -87,28 +106,48 @@ export function CargoDialog({ isOpen, setIsOpen }: CargoDialogProps) {
               </TextInput.Root>
             </div>
           </FormPadrao>
-          <div className='flex flex-col gap-2 mt-3'>
-            {cargos?.map(({ id, nome }) => {
-              return (
-                <Checkbox.Root
-                  key={id}
-                  className='flex items-center gap-3 group focus:outline-none'
-                  // checked={weekDays.includes(index)}
-                  // onCheckedChange={() => handleToggleWeekDay(index)}
-                >
-                  <div className='h-8 w-8 rounded-lg flex items-center justify-center bg-zinc-900 border-2 border-zinc-800 group-data-[state=checked]:bg-green-500 group-data-[state=checked]:border-green-50 transition-colors group-focus:ring-2 group-focus:ring-violet-600 group-focus:ring-offset-2 group-focus:ring-offset-background'>
-                    <Checkbox.Indicator>
-                      <Check
-                        size={20}
-                        className='text-white'
-                      />
-                    </Checkbox.Indicator>
-                  </div>
+          <ScrollArea.Root className='flex flex-col gap-2 bg-white rounded-xl shadow-xl px-2 py-3 mt-3 h-36 overflow-hidden'>
+            <h1>Cargos</h1>
+            <ScrollArea.Viewport className='h-full w-full relative '>
+              {cargos?.map(({ id, nome }) => {
+                return (
+                  <Checkbox.Root
+                    key={id}
+                    className='flex items-center gap-3 group focus:outline-none ml-2 mt-1'
+                    checked={occupations.includes(nome)}
+                    onCheckedChange={() => onOccupationsChange({ nome })}
+                  >
+                    <div className='flex justify-center space-x-2'>
+                      <div className='h-6 w-6 rounded-lg flex items-center justify-center bg-green-50 border-2 border-green-500 group-data-[state=checked]:bg-green-500 group-data-[state=checked]:border-green-50 transition-colors group-focus:ring-1 group-focus:ring-violet-600 group-focus:ring-offset-1 group-focus:ring-offset-background'>
+                        <Checkbox.Indicator>
+                          <Check
+                            size={20}
+                            className='text-white'
+                          />
+                        </Checkbox.Indicator>
+                      </div>
 
-                  <span className='text-white leading-tight'>{nome}</span>
-                </Checkbox.Root>
-              );
-            })}
+                      <span className='text-gray-500 leading-tight'>
+                        {nome}
+                      </span>
+                    </div>
+                  </Checkbox.Root>
+                );
+              })}
+            </ScrollArea.Viewport>
+            <ScrollArea.Scrollbar
+              orientation='vertical'
+              className='flex p-1 duration-300 ease-out bg-gray-300 bg-opacity-20 hover:p-2'
+            >
+              <ScrollArea.Thumb
+                className={clsx('bg-blue-500 rounded-full min-w-[10px]')}
+              />
+            </ScrollArea.Scrollbar>
+          </ScrollArea.Root>
+          <div className='flex justify-center'>
+            <Dialog.Close className=' mt-2 bg-red-500 text-white uppercase font-semibold border border-red-600 rounded-xl px-4 py-3 sm:px-6'>
+              Sair
+            </Dialog.Close>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

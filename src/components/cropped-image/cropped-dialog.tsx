@@ -7,7 +7,7 @@ import { Button } from '../form/button';
 interface CroppedDialogProps {
   isOpen: boolean;
   changeIsOpen: (value: boolean) => void;
-  image: File | undefined;
+  image: File | undefined | null;
   onImage: (file: File) => void;
 }
 export function CroppedDialog({

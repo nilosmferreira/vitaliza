@@ -8,9 +8,9 @@ import { PessoaIcon } from '../icons/pessoa-icon';
 import { CroppedDialog } from './cropped-dialog';
 
 interface CroppedImageProps {
-  file?: File | undefined;
+  file?: File | undefined | null;
   avatar?: string;
-  onImage: (file: File) => void;
+  onImage: (file: File | null) => void;
 }
 
 export function CroppedImage({ file, avatar, onImage }: CroppedImageProps) {
@@ -86,7 +86,10 @@ export function CroppedImage({ file, avatar, onImage }: CroppedImageProps) {
               <span>Trocar Avatar</span>
             </DropdownMenuPrimitive.Item>
             <DropdownMenuPrimitive.Item
-              onClick={() => setIsOpen(true)}
+              onClick={() => {
+                onImage(null);
+                // setIsOpen(true);
+              }}
               className={clsx(
                 'flex cursor-default select-none items-center rounded-md px-2 py-2 text-base outline-none',
                 'text-gray-400 focus:bg-blue-50 dark:text-gray-500 dark:focus:bg-gray-900'

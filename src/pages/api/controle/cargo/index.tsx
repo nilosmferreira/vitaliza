@@ -16,11 +16,13 @@ export default async function handle(
     return res.status(200).json(result);
   } else if (method === 'POST') {
     const { nome } = cargoPostSchema.parse(req.body);
+
     await prisma.occupation.create({
       data: {
         id: randomUUID(),
         name: nome,
       },
     });
+    return res.status(201).end();
   }
 }

@@ -34,6 +34,10 @@ const colaboradorSchema = z.object({
 });
 
 type Colaborador = z.infer<typeof colaboradorSchema>;
+type Occupation = {
+  // id: string;
+  nome: string;
+};
 
 const ViaCEPSchema = z.object({
   cep: z.string(),
@@ -50,13 +54,15 @@ const ViaCEPSchema = z.object({
 type ViaCEP = z.infer<typeof ViaCEPSchema>;
 export default function ColaboradorCadEdit() {
   const router = useRouter();
-  const [image, setImage] = useState<File>();
+  const [image, setImage] = useState<File | null>();
+  const [selectedCargos, setSelectedCargos] = useState<string[]>([]);
   const [isOpenCargo, setIsOpenCargo] = useState(false);
   const {
     register,
     setValue,
     handleSubmit,
-    formState: { errors },
+    reset,
+    formState: { isSubmitting, errors },
   } = useForm<Colaborador>({
     resolver: zodResolver(colaboradorSchema),
   });
@@ -92,7 +98,6 @@ export default function ColaboradorCadEdit() {
   const handleFormatterPHONE: ChangeEventHandler<HTMLInputElement> = (
     event
   ) => {
-    console.log(event.target.name);
     const { name } = event.target;
     let value = event.target.value.replace(/\D/g, '');
     if (value.length === 10) {
@@ -104,12 +109,50 @@ export default function ColaboradorCadEdit() {
     else if (name === 'celular') setValue('celular', value);
     else setValue('telefone_comercial', value);
   };
-  const onSubmit = handleSubmit((data) => console.log(data));
+  const handleSelected = (cargo: Occupation) => {
+    const cargoAlreadExist = selectedCargos.find((item) => item === cargo.nome);
+
+    let newCargos: string[] = [];
+    if (cargoAlreadExist) {
+      newCargos = selectedCargos.filter((item) => item !== cargo.nome);
+    } else {
+      newCargos = [...selectedCargos, cargo.nome];
+    }
+    const sortedNewOccupations = newCargos.sort();
+    // console.log('new', sortedNewOccupations);
+
+    setSelectedCargos(sortedNewOccupations);
+  };
+  const onSubmit = handleSubmit((data) => {
+    const frm = new FormData();
+    frm.append(
+      'data',
+      JSON.stringify({
+        ...data,
+        cargos: selectedCargos.join(','),
+        image: image ? image.name : image,
+      })
+    );
+    if (image)
+      frm.append(
+        'avatar',
+        new File([image], image.name, {
+          type: image.type,
+        })
+      );
+    console.table({
+      ...data,
+      cargos: selectedCargos.join(','),
+      image: image ? image.name : image,
+    });
+  });
   return (
     <Layout>
       <CargoDialog
         isOpen={isOpenCargo}
         setIsOpen={setIsOpenCargo}
+        occupations={selectedCargos}
+        onOccupationsChange={handleSelected}
       />
       <FormPadrao
         title='Incluir colaborador'
@@ -129,7 +172,7 @@ export default function ColaboradorCadEdit() {
           file={image}
           onImage={setImage}
         />
-        <Scroll.Root className='relative h-[calc(100vh-22rem)] md:h-96 overflow-hidden'>
+        <Scroll.Root className='relative h-[calc(100vh-22rem)] md:h-full overflow-hidden'>
           <Scroll.Viewport className='relative h-full w-full'>
             <div className='pr-4 pl-1 space-y-2 pb-2'>
               <div className='relative grid grid-cols-1 md:grid-cols-2 gap-2'>
@@ -163,15 +206,19 @@ export default function ColaboradorCadEdit() {
                         'focus-within:ring-blue-600 focus-within:border-transparent h-11'
                       )}
                     >
-                      <span className='relative text-md text-white bg-green-400 px-2 py-1 rounded-full'>
+                      {selectedCargos?.map((nome) => (
                         <button
+                          key={nome}
                           type='button'
-                          className='absolute w-4 h-4 text-xs bg-red-500 rounded-full -right-2 -top-1 leading flex justify-center items-center'
+                          onClick={() => handleSelected({ nome })}
+                          className='relative text-md text-white bg-green-400 px-2 py-1 rounded-full mr-2'
                         >
-                          <X />
+                          <span className='absolute w-2 h-2 md:w-4 md:h-4 text-xs bg-red-500 rounded-full -right-2 -top-1 leading flex justify-center items-center'>
+                            <X />
+                          </span>
+                          <span>{nome}</span>
                         </button>
-                        <span>Diretor Financeiro</span>
-                      </span>
+                      ))}
                     </div>
                     <Button
                       variant='info'
@@ -184,14 +231,10 @@ export default function ColaboradorCadEdit() {
                       />
                     </Button>
                   </div>
-                  {/* <TextInput.Root>
-                    <TextInput.Icon>
-                    </TextInput.Icon>
-                  </TextInput.Root> */}
                 </div>
               </div>
-              <div className='flex gap-2'>
-                <div className='w-28'>
+              <div className='grid grid-cols-1 md:flex gap-2'>
+                <div className='w-full md:w-28'>
                   <Label htmlFor='razao'>CEP</Label>
                   <TextInput.Root error={errors['cep']}>
                     <TextInput.Input
@@ -213,7 +256,7 @@ export default function ColaboradorCadEdit() {
                   </TextInput.Root>
                 </div>
               </div>
-              <div className='relative flex gap-2'>
+              <div className='relative grid grid-cols-1 md:flex gap-2'>
                 <div className='w-full md:w-28'>
                   <Label htmlFor='numero'>Nº.</Label>
                   <TextInput.Root error={errors['numero']}>
@@ -223,7 +266,7 @@ export default function ColaboradorCadEdit() {
                     />
                   </TextInput.Root>
                 </div>
-                <div className='w-28'>
+                <div className='w-full md:w-28'>
                   <Label htmlFor='complemento'>Complemento</Label>
                   <TextInput.Root>
                     <TextInput.Input
