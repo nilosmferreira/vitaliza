@@ -1,4 +1,4 @@
-import prisma from '@/infra/prisma';
+import prisma from '@/infra/database/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handle(

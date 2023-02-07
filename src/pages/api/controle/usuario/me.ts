@@ -1,5 +1,5 @@
 import { decodeToken } from '@/helpers/decode-token';
-import prisma from '@/infra/prisma';
+import prisma from '@/infra/database/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function me(req: NextApiRequest, res: NextApiResponse) {

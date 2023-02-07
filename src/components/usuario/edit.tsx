@@ -162,7 +162,6 @@ export function EditUser() {
   };
 
   const handleOnSubmit = handleSubmit((data) => {
-    console.log('oi');
     const form = new FormData();
     form.append('data', JSON.stringify(data));
     if (imageCroped && imageCroped.file && image) {

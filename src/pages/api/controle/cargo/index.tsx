@@ -1,7 +1,7 @@
-import prisma from '@/infra/prisma';
 import { randomUUID } from 'node:crypto';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
+import prisma from '@/infra/database/prisma';
 const cargoPostSchema = z.object({
   nome: z.string(),
 });

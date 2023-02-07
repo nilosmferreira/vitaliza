@@ -1,9 +1,9 @@
-import prisma from '@/infra/prisma';
 import { decodeToken } from '@/helpers/decode-token';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { verify } from 'jsonwebtoken';
 import { compareSync, hashSync } from 'bcrypt';
 import { z } from 'zod';
+import prisma from '@/infra/database/prisma';
 
 const RequestDataSchema = z.object({
   currentPassword: z.string(),

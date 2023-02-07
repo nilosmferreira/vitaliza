@@ -1,6 +1,6 @@
 import { sendingS3Amazon } from '@/application/shared/sending-s3-amazon';
 import { RequestQuerySchema } from '@/helpers/request-query-schema';
-import prisma from '@/infra/prisma';
+import prisma from '@/infra/database/prisma';
 import { hashSync } from 'bcrypt';
 import formidable from 'formidable';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -114,14 +114,12 @@ export default async function Usuarios(
               message: 'Não é um e-mail válido',
             }),
         });
-        console.log('passando');
 
         const form = new formidable.IncomingForm();
         form.parse(req, async (error, fields, files) => {
           if (error) {
             return res.status(400).json(error);
           }
-          console.log('passando');
           if (fields['data']) {
             const { firstName, lastName, email } = updateUserData.parse(
               JSON.parse(String(fields['data']))

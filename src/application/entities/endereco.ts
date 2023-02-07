@@ -4,10 +4,10 @@ import { z } from 'zod';
 export const EnderecoSchema = z.object({
   cep: z.string(),
   logradouro: z.string(),
-  numero: z.string(),
+  numero: z.string().nullish(),
   complemento: z.string().nullish(),
   cidade: z.string(),
-  bairro: z.string(),
+  bairro: z.string().nullable(),
   estado: z.string(),
 });
 type EnderecoProps = z.infer<typeof EnderecoSchema>;

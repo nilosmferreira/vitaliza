@@ -1,8 +1,8 @@
-import prisma from '@/infra/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { compareSync } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
+import prisma from '@/infra/database/prisma';
 
 const RequestBody = z.object({
   username: z.string(),

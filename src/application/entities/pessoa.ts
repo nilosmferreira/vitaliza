@@ -5,12 +5,12 @@ import { EnderecoSchema } from './endereco';
 export const PessoaSchema = z.object({
   tipoPessoa: z.enum(['colaborador', 'atleta', 'responsavel']),
   nome: z.string(),
-  razaoSocial: z.string().nullish(),
-  apelido: z.string().nullish(),
-  email: z.string().email().nullish(),
-  telefone: z.string(),
-  celular: z.string(),
-  telefoneComercial: z.string(),
+  razao: z.string().nullable(),
+  apelido: z.string().nullable(),
+  email: z.string().email().nullable(),
+  telefone: z.string().nullable(),
+  celular: z.string().nullable(),
+  telefone_comercial: z.string().nullable(),
   endereco: z.array(EnderecoSchema),
 });
 type PessoaProps = z.infer<typeof PessoaSchema>;
@@ -32,7 +32,7 @@ export class Pessoa {
     return this.data.tipoPessoa;
   }
   get razaoSocial() {
-    return this.data.razaoSocial;
+    return this.data.razao;
   }
   get apelido() {
     return this.data.apelido;
@@ -47,7 +47,7 @@ export class Pessoa {
     return this.data.telefone;
   }
   get telefoneComercial() {
-    return this.data.telefoneComercial;
+    return this.data.telefone_comercial;
   }
   get endereco() {
     return this.data.endereco;

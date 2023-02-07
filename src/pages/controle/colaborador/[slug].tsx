@@ -13,6 +13,8 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, X } from 'phosphor-react';
 import { CargoDialog } from '@/components/dialog/cargo-dialog';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/infra/axios';
 
 const colaboradorSchema = z.object({
   nome: z.string().min(1, {
@@ -57,6 +59,7 @@ export default function ColaboradorCadEdit() {
   const [image, setImage] = useState<File | null>();
   const [selectedCargos, setSelectedCargos] = useState<string[]>([]);
   const [isOpenCargo, setIsOpenCargo] = useState(false);
+  const queryClient = useQueryClient();
   const {
     register,
     setValue,
@@ -66,6 +69,16 @@ export default function ColaboradorCadEdit() {
   } = useForm<Colaborador>({
     resolver: zodResolver(colaboradorSchema),
   });
+  const { mutate, isLoading: isLoadingMutate } = useMutation({
+    mutationFn: (data: FormData) => {
+      return api.post('/api/controle/colaborador', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    },
+  });
+
   const { slug } = router.query;
   const handleFormatterCEP: ChangeEventHandler<HTMLInputElement> = (event) => {
     const value = event.target.value
@@ -123,28 +136,34 @@ export default function ColaboradorCadEdit() {
 
     setSelectedCargos(sortedNewOccupations);
   };
+
   const onSubmit = handleSubmit((data) => {
-    const frm = new FormData();
-    frm.append(
-      'data',
-      JSON.stringify({
+    try {
+      const frm = new FormData();
+      const newData = {
         ...data,
         cargos: selectedCargos.join(','),
         image: image ? image.name : image,
-      })
-    );
-    if (image)
-      frm.append(
-        'avatar',
-        new File([image], image.name, {
-          type: image.type,
-        })
-      );
-    console.table({
-      ...data,
-      cargos: selectedCargos.join(','),
-      image: image ? image.name : image,
-    });
+      };
+      const strData = JSON.stringify(newData);
+      frm.append('data', strData);
+      if (image) {
+        frm.append(
+          'avatar',
+          new File([image], image.name, {
+            type: image.type,
+          })
+        );
+      }
+      mutate(frm, {
+        onSuccess: (success) => console.log(success),
+        onError: (e) => console.error(e),
+      });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      console.log('finalizado');
+    }
   });
   return (
     <Layout>
@@ -155,7 +174,7 @@ export default function ColaboradorCadEdit() {
         onOccupationsChange={handleSelected}
       />
       <FormPadrao
-        title='Incluir colaborador'
+        title='Incluir Colaborador'
         handleSubmit={onSubmit}
         footer={
           <footer className='bg-gray-50 px-4 py-3 text-right sm:px-6'>
