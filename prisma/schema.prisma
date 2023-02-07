@@ -121,6 +121,7 @@ model Person {
   ContactsPerson    ContactsPerson[]
   DatasBankPerson   DatasBankPerson[]
   occupationsPerson OccupationsPerson[]
+  avatar            String?
 
   @@map("persons")
 }
