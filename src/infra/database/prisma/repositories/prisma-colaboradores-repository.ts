@@ -23,7 +23,37 @@ export class PrismaColaboradoresRepository implements ColaboradoresRepository {
       PrismaColaboradoresMapper.toDomain(colaborador)
     );
   }
-  create(colaborador: Pessoa): Promise<void> {
-    throw new Error('Method not implemented.');
+  async create(colaborador: Pessoa): Promise<void> {
+    const data = PrismaColaboradoresMapper.toPrisma(colaborador);
+    await prisma.person.create({
+      data: {
+        ...data,
+        AddressesPerson: {
+          create: {
+            address: {
+              create: colaborador.endereco.map(
+                ({
+                  bairro,
+                  cep,
+                  cidade,
+                  estado,
+                  logradouro,
+                  complemento,
+                  numero,
+                  id,
+                }) => ({
+                  city: cidade,
+                  id,
+                  street: logradouro,
+                  zip: cep,
+                  complement: complemento,
+                  number: numero,
+                })
+              ),
+            },
+          },
+        },
+      },
+    });
   }
 }

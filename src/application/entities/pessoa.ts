@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { EnderecoSchema } from './endereco';
+import { Endereco, enderecoSchema } from './endereco';
 
 export const PessoaSchema = z.object({
   tipoPessoa: z.enum(['colaborador', 'atleta', 'responsavel']),
@@ -11,7 +11,8 @@ export const PessoaSchema = z.object({
   telefone: z.string().nullable(),
   celular: z.string().nullable(),
   telefone_comercial: z.string().nullable(),
-  endereco: z.array(EnderecoSchema),
+  endereco: z.array(enderecoSchema),
+  avatar: z.string().nullable(),
 });
 type PessoaProps = z.infer<typeof PessoaSchema>;
 export class Pessoa {
@@ -51,5 +52,8 @@ export class Pessoa {
   }
   get endereco() {
     return this.data.endereco;
+  }
+  get avatar() {
+    return this.data.avatar;
   }
 }

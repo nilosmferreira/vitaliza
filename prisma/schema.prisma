@@ -6,140 +6,171 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id          String        @id
-  firstName   String        @map("first_name")
-  lastName    String        @map("last_name")
-  userName    String        @unique @map("username")
-  password    String
-  email       String        @unique @map("created_at")
-  createdAt   DateTime      @default(now()) @map("deleted_at")
-  deletedAt   DateTime?
-  avatar      String?
-  UserAvatars UserAvatars[]
+  id        String    @id
+  firstName String    @map("first_name")
+  lastName  String    @map("last_name")
+  userName  String    @unique @map("username")
+  password  String
+  email     String    @unique @map("created_at")
+  createdAt DateTime  @default(now()) @map("deleted_at")
+  deletedAt DateTime?
+  avatar    String?
 
   @@map("users")
 }
 
-model UserAvatars {
-  user   User   @relation(fields: [userId], references: [id])
-  avatar String
-  userId String @map("user_id")
-
-  @@id([avatar, userId])
-  @@map("user_avatars")
-}
-
-model KindOfPerson {
-  id     String   @id
-  name   String   @unique
-  Person Person[]
-
-  @@map("type_persons")
-}
-
-model Address {
-  id              String            @id
-  zip             String
-  street          String
-  city            String
-  number          String?
-  complement      String?
-  distrinct       String?
-  createdAt       DateTime          @default(now()) @map("created_at")
-  deletedAt       DateTime?         @map("updated_at")
-  AddressesPerson AddressesPerson[]
-
-  @@map("addresses")
-}
-
-model AddressesPerson {
-  person    Person  @relation(fields: [personId], references: [id])
-  address   Address @relation(fields: [addressId], references: [id])
-  personId  String  @map("person_id")
-  addressId String  @map("address_id")
-
-  @@id([personId, addressId])
-  @@map("addresses_person")
-}
-
-model Contact {
-  id             String           @id
-  name           String
-  phone          String?
-  cellphone      String?
-  ContactsPerson ContactsPerson[]
-
-  @@map("contacts")
-}
-
-model ContactsPerson {
-  contact    Contact @relation(fields: [contact_id], references: [id])
-  person     Person  @relation(fields: [person_id], references: [id])
-  contact_id String
-  person_id  String
-
-  @@id([contact_id, person_id])
-  @@map("contacts_person")
-}
-
-model BankData {
-  id              String            @id
-  code            String            @map("code_bank")
-  agency          String
-  account         String
-  document        String
-  DatasBankPerson DatasBankPerson[]
-}
-
-model DatasBankPerson {
-  person       Person   @relation(fields: [person_id], references: [id])
-  data         BankData @relation(fields: [bank_data_id], references: [id])
-  person_id    String
-  bank_data_id String
-
-  @@id([person_id, bank_data_id])
-  @@map("datas_bank_person")
-}
-
-model Person {
-  id                String              @id
-  typePerson        KindOfPerson        @relation(fields: [typePersonId], references: [id])
-  typePersonId      String              @map("type_person_id")
-  name              String
-  corporateName     String?             @map("corporate_name")
-  surname           String?
-  email             String?
-  phone             String?
-  cellphone         String?
-  corporatePhone    String?             @map("corporate_phone")
-  AddressesPerson   AddressesPerson[]
-  ContactsPerson    ContactsPerson[]
-  DatasBankPerson   DatasBankPerson[]
-  occupationsPerson OccupationsPerson[]
-  avatar            String?
-
-  @@map("persons")
-}
-
 model Occupation {
-  id                String              @id
-  name              String              @unique
-  occupationsPerson OccupationsPerson[]
+  id                      String                    @id
+  name                    String                    @unique
+  OccupationsCollaborator OccupationsCollaborator[]
 
   @@map("occupations")
 }
 
-model OccupationsPerson {
-  person       Person     @relation(fields: [personId], references: [id])
-  occupation   Occupation @relation(fields: [occupationId], references: [id])
-  personId     String     @map("person_id")
-  occupationId String     @map("occupation_id")
+model Collaborator {
+  id                String                    @id
+  name              String
+  corporateName     String?                   @map("corporate_name")
+  surname           String?
+  email             String?
+  phone             String?
+  cellPhone         String?                   @map("cell_phone")
+  corporatePhone    String?                   @map("corporate_phone")
+  avatar            String?
+  zip               String?
+  street            String?
+  city              String?
+  number            String?
+  addressComplement String?                   @map("address_complement")
+  state             String?
+  district          String?
+  occupations       OccupationsCollaborator[]
 
-  @@id([personId, occupationId])
-  @@map("occupations_person")
+  @@map("collaborators")
 }
+
+model OccupationsCollaborator {
+  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id])
+  occupation     Occupation   @relation(fields: [occupationId], references: [id])
+  collaboratorId String       @map("collaborator_id")
+  occupationId   String       @map("occupation_id")
+
+  @@id([collaboratorId, occupationId])
+  @@map("occupations_collaborator")
+}
+
+// model UserAvatars {
+//   user   User   @relation(fields: [userId], references: [id])
+//   avatar String
+//   userId String @map("user_id")
+
+//   @@id([avatar, userId])
+//   @@map("user_avatars")
+// }
+
+// model KindOfPerson {
+//   id     String   @id
+//   name   String   @unique
+//   Person Person[]
+
+//   @@map("type_persons")
+// }
+
+// model Address {
+//   id              String            @id
+//   zip             String
+//   street          String
+//   city            String
+//   number          String?
+//   complement      String?
+//   distrinct       String?
+//   createdAt       DateTime          @default(now()) @map("created_at")
+//   deletedAt       DateTime?         @map("updated_at")
+//   AddressesPerson AddressesPerson[]
+
+//   @@map("addresses")
+// }
+
+// model AddressesPerson {
+//   person    Person  @relation(fields: [personId], references: [id])
+//   address   Address @relation(fields: [addressId], references: [id])
+//   personId  String  @map("person_id")
+//   addressId String  @map("address_id")
+
+//   @@id([personId, addressId])
+//   @@map("addresses_person")
+// }
+
+// model Contact {
+//   id             String           @id
+//   name           String
+//   phone          String?
+//   cellphone      String?
+//   ContactsPerson ContactsPerson[]
+
+//   @@map("contacts")
+// }
+
+// model ContactsPerson {
+//   contact    Contact @relation(fields: [contact_id], references: [id])
+//   person     Person  @relation(fields: [person_id], references: [id])
+//   contact_id String
+//   person_id  String
+
+//   @@id([contact_id, person_id])
+//   @@map("contacts_person")
+// }
+
+// model BankData {
+//   id              String            @id
+//   code            String            @map("code_bank")
+//   agency          String
+//   account         String
+//   document        String
+//   DatasBankPerson DatasBankPerson[]
+// }
+
+// model DatasBankPerson {
+//   person       Person   @relation(fields: [person_id], references: [id])
+//   data         BankData @relation(fields: [bank_data_id], references: [id])
+//   person_id    String
+//   bank_data_id String
+
+//   @@id([person_id, bank_data_id])
+//   @@map("datas_bank_person")
+// }
+
+// model Person {
+//   id                String              @id
+//   typePerson        KindOfPerson        @relation(fields: [typePersonId], references: [id])
+//   typePersonId      String              @map("type_person_id")
+//   name              String
+//   corporateName     String?             @map("corporate_name")
+//   surname           String?
+//   email             String?
+//   phone             String?
+//   cellphone         String?
+//   corporatePhone    String?             @map("corporate_phone")
+//   AddressesPerson   AddressesPerson[]
+//   ContactsPerson    ContactsPerson[]
+//   DatasBankPerson   DatasBankPerson[]
+//   occupationsPerson OccupationsPerson[]
+//   avatar            String?
+
+//   @@map("persons")
+// }
+
+// model OccupationsPerson {
+//   person       Person     @relation(fields: [personId], references: [id])
+//   occupation   Occupation @relation(fields: [occupationId], references: [id])
+//   personId     String     @map("person_id")
+//   occupationId String     @map("occupation_id")
+
+//   @@id([personId, occupationId])
+//   @@map("occupations_person")
+// }

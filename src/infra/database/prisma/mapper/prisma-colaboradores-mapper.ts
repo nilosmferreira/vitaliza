@@ -1,56 +1,83 @@
+import { Colaborador } from '@/application/entities/colaborador';
 import { Endereco } from '@/application/entities/endereco';
 import { Pessoa } from '@/application/entities/pessoa';
-import { Address, Person } from '@prisma/client';
+import { Collaborator } from '@prisma/client';
+
 export class PrismaColaboradoresMapper {
-  static toPrisma(colaborador: Pessoa): Person {
+  static toPrisma({
+    apelido,
+    avatar,
+    bairro,
+    celular,
+    cep,
+    cidade,
+    complemento,
+    email,
+    estado,
+    id,
+    logradouro,
+    nome,
+    numero,
+    razaoSocial,
+    telefone,
+    telefoneComercial,
+  }: Colaborador): Collaborator {
     return {
-      cellphone: colaborador.celular,
-      corporateName: colaborador.razaoSocial,
-      corporatePhone: colaborador.telefoneComercial,
-      email: colaborador.email,
-      id: colaborador.id,
-      name: colaborador.nome,
-      phone: colaborador.telefone,
-      surname: colaborador.apelido,
-      typePersonId: colaborador.tipoPessoa,
+      cellPhone: celular,
+      corporateName: razaoSocial,
+      corporatePhone: telefoneComercial,
+      email: email,
+      id: id,
+      name: nome,
+      phone: telefone,
+      surname: apelido,
+      avatar: avatar,
+      zip: cep,
+      addressComplement: complemento,
+      city: cidade,
+      state: estado,
+      district: bairro,
+      number: numero,
+      street: logradouro,
     };
   }
-  static toDomain(
-    colaborador: Person & {
-      AddressesPerson: {
-        address: Address;
-      }[];
-    }
-  ): Pessoa {
-    const { AddressesPerson } = colaborador;
-
-    return new Pessoa(
+  static toDomain({
+    id,
+    addressComplement,
+    avatar,
+    cellPhone,
+    city,
+    corporateName,
+    corporatePhone,
+    state,
+    district,
+    email,
+    name,
+    number,
+    phone,
+    street,
+    surname,
+    zip,
+  }: Collaborator): Colaborador {
+    return new Colaborador(
       {
-        apelido: colaborador.surname,
-        celular: colaborador.cellphone,
-        email: colaborador.email,
-        nome: colaborador.name,
-        razao: colaborador.corporateName,
-        telefone: colaborador.phone,
-        telefone_comercial: colaborador.corporatePhone,
-        tipoPessoa: 'colaborador',
-        endereco: AddressesPerson.map((item) => {
-          const address = item.address;
-          return new Endereco(
-            {
-              bairro: address.distrinct,
-              cep: address.zip,
-              cidade: address.city,
-              estado: 'PE',
-              logradouro: address.street,
-              complemento: address.complement,
-              numero: address.number,
-            },
-            address.id
-          );
-        }),
+        apelido: surname,
+        celular: cellPhone,
+        email: email,
+        nome: name,
+        telefone: phone,
+        telefone_comercial: corporatePhone,
+        avatar: avatar,
+        bairro: district,
+        cep: zip,
+        cidade: city,
+        endereco_complemento: addressComplement,
+        logradouro: street,
+        numero: number,
+        razao_social: corporateName,
+        uf: state,
       },
-      colaborador.id
+      id
     );
   }
 }

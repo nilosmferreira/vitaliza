@@ -1,7 +1,8 @@
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 
-export const EnderecoSchema = z.object({
+export const enderecoSchema = z.object({
+  id: z.string().nullable(),
   cep: z.string(),
   logradouro: z.string(),
   numero: z.string().nullish(),
@@ -10,7 +11,7 @@ export const EnderecoSchema = z.object({
   bairro: z.string().nullable(),
   estado: z.string(),
 });
-type EnderecoProps = z.infer<typeof EnderecoSchema>;
+type EnderecoProps = z.infer<typeof enderecoSchema>;
 export class Endereco {
   private _id: string;
   private data: EnderecoProps;
