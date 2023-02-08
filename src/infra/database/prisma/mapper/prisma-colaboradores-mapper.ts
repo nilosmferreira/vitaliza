@@ -1,6 +1,4 @@
 import { Colaborador } from '@/application/entities/colaborador';
-import { Endereco } from '@/application/entities/endereco';
-import { Pessoa } from '@/application/entities/pessoa';
 import { Collaborator } from '@prisma/client';
 
 export class PrismaColaboradoresMapper {

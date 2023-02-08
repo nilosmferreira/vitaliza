@@ -1,8 +1,9 @@
-import { Endereco } from '@/application/entities/endereco';
-import { Pessoa } from '@/application/entities/pessoa';
+import { Colaborador } from '@/application/entities/colaborador';
+import { sendingS3Amazon } from '@/application/shared/sending-s3-amazon';
 import { RequestQuerySchema } from '@/helpers/request-query-schema';
+import prisma from '@/infra/database/prisma';
 import { PrismaColaboradoresRepository } from '@/infra/database/prisma/repositories/prisma-colaboradores-repository';
-import { IncomingForm } from 'formidable';
+import formidable, { IncomingForm } from 'formidable';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 
@@ -21,9 +22,9 @@ async function handle(req: NextApiRequest, res: NextApiResponse) {
     const colaboradorSchema = z.object({
       nome: z.string(),
       razao: z.string(),
-      cep: z.string(),
-      numero: z.string().nullish(),
-      complemento: z.string().nullish(),
+      cep: z.string().nullable(),
+      numero: z.string().nullable(),
+      complemento: z.string().nullable(),
       telefone: z
         .string()
         .nullable()
@@ -36,66 +37,89 @@ async function handle(req: NextApiRequest, res: NextApiResponse) {
         .string()
         .nullable()
         .transform((value) => (value ? value?.replace(/\D/g, '') : null)),
-      logradouro: z.string(),
-      cidade: z.string(),
-      uf: z.string(),
-      bairro: z.string(),
+      logradouro: z.string().nullable(),
+      cidade: z.string().nullable(),
+      uf: z.string().nullable(),
+      bairro: z.string().nullable(),
       cargos: z.string().transform((value) => value.split(',')),
       image: z.string().nullish().nullable(),
     });
     try {
-      const incomingForm = new IncomingForm();
-
-      incomingForm.parse(req, async (error, fields, files) => {
-        if (error) {
-          return res.status(400).end();
-        }
-        const {
-          celular,
-          bairro,
-          cargos,
-          cep,
-          cidade,
-          complemento,
-          logradouro,
-          nome,
-          numero,
-          razao,
-          telefone,
-          telefone_comercial,
-          uf,
-          image: imageData,
-        } = colaboradorSchema.parse(JSON.parse(String(fields['data'])));
-        if (imageData) {
-          // if (files['avatar']) {
-          //   const file = files['avatar'] as formidable.File;
-          //   const result = await sendingS3Amazon(file);
-          //   data.image = result.fileName;
-          // }
-        }
-        const enderecoEntity = new Endereco({
-          complemento,
-          bairro,
-          numero,
-          cep,
-          cidade,
-          estado: uf,
-          logradouro,
-        });
-        const pessoa = new Pessoa({
-          apelido: razao,
-          celular,
-          email: null,
-          endereco: [enderecoEntity],
-          nome,
-          razao,
-          telefone,
-          telefone_comercial,
-          tipoPessoa: 'colaborador',
-        });
-
-        return res.status(201).json(pessoa);
+      const incomingForm = new IncomingForm({
+        multiples: false,
       });
+
+      incomingForm.parse(
+        req,
+        async (error, fields, files: formidable.Files) => {
+          if (error) {
+            return res.status(400).end();
+          }
+          const {
+            celular,
+            bairro,
+            cargos,
+            cep,
+            cidade,
+            complemento,
+            logradouro,
+            nome,
+            numero,
+            razao,
+            telefone,
+            telefone_comercial,
+            uf,
+            image: imageData,
+          } = colaboradorSchema.parse(JSON.parse(String(fields['data'])));
+          let fileName: string = '';
+          if (imageData) {
+            if (files['avatar']) {
+              const myfiles = files['avatar'] as formidable.File[];
+
+              const result = await sendingS3Amazon(myfiles[0]);
+              fileName = result.fileName;
+              // return res.status(400).end();
+            }
+          }
+          const colaborador = new Colaborador({
+            apelido: razao,
+            avatar: fileName.length > 0 ? fileName : null,
+            bairro,
+            celular,
+            cep,
+            cidade,
+            email: null,
+            endereco_complemento: complemento,
+            logradouro,
+            nome,
+            numero,
+            razao_social: razao,
+            telefone,
+            telefone_comercial,
+            uf,
+          });
+          await repository.create(colaborador);
+          const occupations = await prisma.occupation.findMany({
+            where: {
+              name: {
+                in: cargos,
+              },
+            },
+          });
+          await prisma.occupationsCollaborator.createMany({
+            data: occupations.map((occupation) => ({
+              collaboratorId: colaborador.id,
+              occupationId: occupation.id,
+            })),
+          });
+          // await prisma.occupationsCollaborator.deleteMany({
+          //   where: {
+          //     collaboratorId: colaborador.id,
+          //   },
+          // });
+          return res.status(201).json(colaborador);
+        }
+      );
     } catch (error) {
       console.log(error);
     } finally {

@@ -140,11 +140,6 @@ export default async function Usuarios(
                   firstName,
                   lastName,
                   avatar,
-                  UserAvatars: {
-                    create: {
-                      avatar,
-                    },
-                  },
                 },
               });
             } else {

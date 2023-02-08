@@ -177,7 +177,7 @@ export default function ColaboradorCadEdit() {
         title='Incluir Colaborador'
         handleSubmit={onSubmit}
         footer={
-          <footer className='bg-gray-50 px-4 py-3 text-right sm:px-6'>
+          <footer className='bg-gray-50 px-2 py-1 text-right sm:px-6'>
             <Button
               variant='primary'
               type='submit'

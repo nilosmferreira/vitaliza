@@ -46,7 +46,7 @@ export function CroppedImage({ file, avatar, onImage }: CroppedImageProps) {
         onChange={onSelectFile}
       />
 
-      <div className='mt-4 flex items-center justify-center  w-full cursor-pointer'>
+      <div className='flex items-center justify-center  w-full cursor-pointer'>
         <DropdownMenuPrimitive.Trigger asChild>
           <div className='w-20 h-20 text-cyan-800 border bg-green-50 rounded-full'>
             {file || avatar ? (
