@@ -6,7 +6,7 @@ import { Layout } from '@/components/layout';
 import { useRouter } from 'next/router';
 import * as Scroll from '@radix-ui/react-scroll-area';
 import clsx from 'clsx';
-import { ChangeEventHandler, useState } from 'react';
+import { ChangeEventHandler, useEffect, useState } from 'react';
 import { CroppedImage } from '@/components/cropped-image';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -15,6 +15,12 @@ import { Plus, X } from 'phosphor-react';
 import { CargoDialog } from '@/components/dialog/cargo-dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/infra/axios';
+import { GetServerSideProps } from 'next';
+import { PrismaColaboradoresRepository } from '@/infra/database/prisma/repositories/prisma-colaboradores-repository';
+import { PrismaColaboradoresMapper } from '@/infra/database/prisma/mapper/prisma-colaboradores-mapper';
+import { ColaboradorViewModel } from '@/infra/http/colaborador-view-model';
+import { Toast } from '@/components/toast';
+import { AxiosError } from 'axios';
 
 const colaboradorSchema = z.object({
   nome: z.string().min(1, {
@@ -26,13 +32,39 @@ const colaboradorSchema = z.object({
   }),
   numero: z.string().nullish(),
   complemento: z.string().nullish(),
-  telefone: z.string(),
-  celular: z.string(),
-  telefone_comercial: z.string(),
+  cargos: z.array(z.string()).nullish().nullable(),
+  telefone: z
+    .string()
+    .nullable()
+    .transform((value) => {
+      if (value) {
+        if (value.length === 10) {
+          value = value.replace(/(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
+        } else {
+          value = value.replace(/(\d{2})(\d)(\d{4})(\d{4})$/, '($1)  $2 $3-$4');
+        }
+      }
+      return value;
+    }),
+  celular: z
+    .string()
+    .nullable()
+    .transform((value) => {
+      if (value) {
+        if (value.length === 10) {
+          value = value.replace(/(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
+        } else {
+          value = value.replace(/(\d{2})(\d)(\d{4})(\d{4})$/, '($1)  $2 $3-$4');
+        }
+      }
+      return value;
+    }),
+  telefone_comercial: z.string().nullish().nullable(),
   logradouro: z.string(),
   cidade: z.string(),
   uf: z.string(),
   bairro: z.string(),
+  avatar: z.string().nullish().nullable(),
 });
 
 type Colaborador = z.infer<typeof colaboradorSchema>;
@@ -54,12 +86,58 @@ const ViaCEPSchema = z.object({
   // siafi: z.string(),
 });
 type ViaCEP = z.infer<typeof ViaCEPSchema>;
-export default function ColaboradorCadEdit() {
+
+interface ColaboradorCadEditProps {
+  colaborador?: Colaborador;
+  colaboradorId?: string;
+}
+export default function ColaboradorCadEdit({
+  colaborador,
+  colaboradorId,
+}: ColaboradorCadEditProps) {
   const router = useRouter();
   const [image, setImage] = useState<File | null>();
   const [selectedCargos, setSelectedCargos] = useState<string[]>([]);
   const [isOpenCargo, setIsOpenCargo] = useState(false);
+  const [message, setMessage] = useState<{
+    type: 'error' | 'success';
+    message: string;
+  }>();
+
   const queryClient = useQueryClient();
+  const isAdd = !colaborador;
+
+  useEffect(() => {
+    if (!isAdd) {
+      if (colaborador?.cargos) setSelectedCargos(colaborador?.cargos);
+      try {
+        if (colaborador?.avatar) {
+          // api
+          //   .get(`/api/avatar/${colaborador.avatar}`)
+          //   .then((response) => console.log(response.data))
+          //   .catch((error) => console.error(error));
+          // .then((res) => console.log(res.data));
+          fetch(`/api/avatar/${colaborador.avatar}`, {
+            method: 'GET',
+            headers: {
+              Accept: '*/*',
+            },
+          })
+            .then((res) => {
+              return res.blob();
+            })
+            .then((blobData) => {
+              setImage(
+                new File([blobData], String(colaborador.avatar), {
+                  type: blobData.type,
+                })
+              );
+              console.log(URL.createObjectURL(blobData));
+            });
+        }
+      } catch (error) {}
+    }
+  }, [isAdd]);
   const {
     register,
     setValue,
@@ -71,15 +149,22 @@ export default function ColaboradorCadEdit() {
   });
   const { mutate, isLoading: isLoadingMutate } = useMutation({
     mutationFn: (data: FormData) => {
-      return api.post('/api/controle/colaborador', data, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      if (isAdd) {
+        return api.post('/api/controle/colaborador', data, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+      } else {
+        return api.put('/api/controle/colaborador', data, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+      }
     },
   });
 
-  const { slug } = router.query;
   const handleFormatterCEP: ChangeEventHandler<HTMLInputElement> = (event) => {
     const value = event.target.value
       .replace(/\D/g, '')
@@ -140,11 +225,21 @@ export default function ColaboradorCadEdit() {
   const onSubmit = handleSubmit((data) => {
     try {
       const frm = new FormData();
-      const newData = {
-        ...data,
-        cargos: selectedCargos.join(','),
-        image: image ? image.name : image,
-      };
+      let newData = {};
+      if (isAdd) {
+        newData = {
+          ...data,
+          cargos: selectedCargos.join(','),
+          image: image ? image.name : image,
+        };
+      } else {
+        newData = {
+          ...data,
+          id: colaboradorId,
+          cargos: selectedCargos.join(','),
+          image: image ? image.name : image,
+        };
+      }
       const strData = JSON.stringify(newData);
       frm.append('data', strData);
       if (image) {
@@ -156,8 +251,18 @@ export default function ColaboradorCadEdit() {
         );
       }
       mutate(frm, {
-        onSuccess: (success) => console.log(success),
-        onError: (e) => console.error(e),
+        onSuccess: (success) => {
+          setMessage({
+            type: 'success',
+            message: 'Gravado com sucesso!',
+          });
+        },
+        onError: (e) => {
+          if (e instanceof Error)
+            setMessage({ type: 'error', message: e.message });
+          else if (e instanceof AxiosError)
+            setMessage({ type: 'error', message: e.response?.data });
+        },
       });
     } catch (error) {
       console.log(error);
@@ -165,8 +270,25 @@ export default function ColaboradorCadEdit() {
       console.log('finalizado');
     }
   });
+  const handleCloseToast = () => {
+    setMessage(undefined);
+  };
   return (
     <Layout>
+      <Toast
+        open={message !== undefined}
+        title={isAdd ? 'Cadastro' : 'Alteração'}
+        handleClose={handleCloseToast}
+      >
+        <span
+          className={clsx('font-bold text-lg p-2', {
+            'text-red-700': message?.type === 'error',
+            'text-green-700': message?.type === 'success',
+          })}
+        >
+          {message?.message}
+        </span>
+      </Toast>
       <CargoDialog
         isOpen={isOpenCargo}
         setIsOpen={setIsOpenCargo}
@@ -174,7 +296,7 @@ export default function ColaboradorCadEdit() {
         onOccupationsChange={handleSelected}
       />
       <FormPadrao
-        title='Incluir Colaborador'
+        title={`${isAdd ? 'Incluir' : 'Editar'} Colaborador`}
         handleSubmit={onSubmit}
         footer={
           <footer className='bg-gray-50 px-2 py-1 text-right sm:px-6'>
@@ -200,7 +322,9 @@ export default function ColaboradorCadEdit() {
                   <TextInput.Root error={errors['nome']}>
                     <TextInput.Input
                       placeholder='Joe Doe'
-                      {...register('nome')}
+                      {...register('nome', {
+                        value: colaborador?.nome,
+                      })}
                     />
                   </TextInput.Root>
                 </div>
@@ -209,7 +333,9 @@ export default function ColaboradorCadEdit() {
                   <TextInput.Root error={errors['razao']}>
                     <TextInput.Input
                       placeholder='Joe Doe'
-                      {...register('razao')}
+                      {...register('razao', {
+                        value: colaborador?.razao,
+                      })}
                     />
                   </TextInput.Root>
                 </div>
@@ -260,6 +386,7 @@ export default function ColaboradorCadEdit() {
                       placeholder='99.999-999'
                       {...register('cep', {
                         onChange: handleFormatterCEP,
+                        value: colaborador?.cep,
                       })}
                     />
                   </TextInput.Root>
@@ -270,7 +397,9 @@ export default function ColaboradorCadEdit() {
                     <TextInput.Input
                       disabled
                       placeholder='Street Joe Doe'
-                      {...register('logradouro')}
+                      {...register('logradouro', {
+                        value: colaborador?.logradouro,
+                      })}
                     />
                   </TextInput.Root>
                 </div>
@@ -281,7 +410,7 @@ export default function ColaboradorCadEdit() {
                   <TextInput.Root error={errors['numero']}>
                     <TextInput.Input
                       placeholder='99999'
-                      {...register('numero')}
+                      {...register('numero', { value: colaborador?.numero })}
                     />
                   </TextInput.Root>
                 </div>
@@ -290,7 +419,9 @@ export default function ColaboradorCadEdit() {
                   <TextInput.Root>
                     <TextInput.Input
                       placeholder='Apto 3020'
-                      {...register('complemento')}
+                      {...register('complemento', {
+                        value: colaborador?.complemento,
+                      })}
                     />
                   </TextInput.Root>
                 </div>
@@ -300,23 +431,33 @@ export default function ColaboradorCadEdit() {
                     <TextInput.Input
                       disabled
                       placeholder='Jardim Atlântico'
-                      {...register('bairro')}
+                      {...register('bairro', { value: colaborador?.bairro })}
                     />
                   </TextInput.Root>
                 </div>
               </div>
-
-              <div className='w-full'>
-                <Label htmlFor='cidade'>Cidade</Label>
-                <TextInput.Root error={errors['cidade']}>
-                  <TextInput.Input
-                    disabled
-                    placeholder='Olinda'
-                    {...register('cidade')}
-                  />
-                </TextInput.Root>
+              <div className='grid grid-cols-1 md:flex gap-2'>
+                <div className='w-full'>
+                  <Label htmlFor='cidade'>Cidade</Label>
+                  <TextInput.Root error={errors['cidade']}>
+                    <TextInput.Input
+                      disabled
+                      placeholder='Olinda'
+                      {...register('cidade', { value: colaborador?.cidade })}
+                    />
+                  </TextInput.Root>
+                </div>
+                <div className='w-28'>
+                  <Label htmlFor='uf'>Estado</Label>
+                  <TextInput.Root error={errors['uf']}>
+                    <TextInput.Input
+                      disabled
+                      placeholder='Pernambuco'
+                      {...register('uf', { value: colaborador?.uf })}
+                    />
+                  </TextInput.Root>
+                </div>
               </div>
-
               <div className='grid grid-cols-1 md:grid-cols-3 gap-2'>
                 <div className=''>
                   <Label htmlFor='telefone'>Telefone</Label>
@@ -326,6 +467,7 @@ export default function ColaboradorCadEdit() {
                       maxLength={12}
                       {...register('telefone', {
                         onChange: handleFormatterPHONE,
+                        value: colaborador?.telefone,
                       })}
                     />
                   </TextInput.Root>
@@ -338,6 +480,7 @@ export default function ColaboradorCadEdit() {
                       maxLength={16}
                       {...register('celular', {
                         onChange: handleFormatterPHONE,
+                        value: colaborador?.celular,
                       })}
                     />
                   </TextInput.Root>
@@ -350,6 +493,7 @@ export default function ColaboradorCadEdit() {
                       maxLength={16}
                       {...register('telefone_comercial', {
                         onChange: handleFormatterPHONE,
+                        value: colaborador?.telefone_comercial,
                       })}
                     />
                   </TextInput.Root>
@@ -370,3 +514,25 @@ export default function ColaboradorCadEdit() {
     </Layout>
   );
 }
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+  const { slug } = params as { slug: string };
+  if (slug === 'novo') {
+    return { props: {} };
+  }
+  const repository = new PrismaColaboradoresRepository();
+  const result = await repository.findById(slug);
+  if (!result) {
+    return {
+      props: {},
+    };
+  }
+  const colaborador = ColaboradorViewModel.toHTTP(
+    PrismaColaboradoresMapper.toDomain(result)
+  );
+
+  const parsed = colaboradorSchema.parse(colaborador);
+
+  return {
+    props: { colaborador: parsed, colaboradorId: colaborador.id },
+  };
+};

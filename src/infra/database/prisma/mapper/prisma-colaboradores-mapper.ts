@@ -56,7 +56,10 @@ export class PrismaColaboradoresMapper {
     street,
     surname,
     zip,
-  }: Collaborator): Colaborador {
+    occupations,
+  }: Collaborator & {
+    occupations: { occupation: { name: string } }[];
+  }): Colaborador {
     return new Colaborador(
       {
         apelido: surname,
@@ -74,6 +77,7 @@ export class PrismaColaboradoresMapper {
         numero: number,
         razao_social: corporateName,
         uf: state,
+        cargos: occupations.map((item) => item.occupation.name),
       },
       id
     );

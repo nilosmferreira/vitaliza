@@ -1,15 +1,12 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import formidable from 'formidable';
 import { createReadStream } from 'fs';
-
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: String(process.env.AWS_ACCESS),
-    secretAccessKey: String(process.env.AWS_SECRET),
-  },
-});
+import { s3Client } from './s3-client';
 
 export async function sendingS3Amazon(file: formidable.File) {
   const stream = createReadStream(file.filepath);

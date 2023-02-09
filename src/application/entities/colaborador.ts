@@ -17,6 +17,7 @@ const colaboradorSchema = z.object({
   endereco_complemento: z.string().nullable(),
   uf: z.string().nullable(),
   bairro: z.string().nullable(),
+  cargos: z.array(z.string()).nullable(),
 });
 
 type ColaboradorData = z.infer<typeof colaboradorSchema>;
@@ -76,5 +77,8 @@ export class Colaborador {
   }
   get avatar() {
     return this.data.avatar;
+  }
+  get cargos() {
+    return this.data.cargos;
   }
 }

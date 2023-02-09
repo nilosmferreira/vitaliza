@@ -4,10 +4,40 @@ import { ListaPadrao } from '@/components/lista';
 import { Loading } from '@/components/loading';
 import { api } from '@/infra/axios';
 import { useQuery } from '@tanstack/react-query';
+import clsx from 'clsx';
 import Link from 'next/link';
+import { PencilSimple } from 'phosphor-react';
+import * as Avatar from '@radix-ui/react-avatar';
+import { PessoaIcon } from '@/components/icons/pessoa-icon';
+import { z } from 'zod';
 
+const colaboradoresSchema = z.array(
+  z.object({
+    apelido: z.string(),
+    avatar: z.string().nullable(),
+    id: z.string(),
+    telefone: z
+      .string()
+      .nullable()
+      .transform((value) =>
+        value?.replace(/(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3')
+      ),
+    celular: z
+      .string()
+      .nullable()
+      .transform((value) =>
+        value?.replace(/(\d{2})(\d)(\d{4})(\d{4})$/, '($1)  $2 $3-$4')
+      ),
+  })
+);
 interface ColaboradorResponse {
-  colaboradores: { name: string };
+  data: {
+    apelido: string;
+    avatar: string;
+    id: string;
+    telefone: string;
+    celular: string;
+  }[];
   count: number;
 }
 export default function Colaborador() {
@@ -22,7 +52,8 @@ export default function Colaborador() {
       const { data } = await api.get<ColaboradorResponse>(
         '/api/controle/colaborador'
       );
-      return data;
+      const dataArray = colaboradoresSchema.parse(data.data);
+      return { data: dataArray, count: data.count };
     },
   });
 
@@ -36,7 +67,7 @@ export default function Colaborador() {
     ),
     isError: (
       <div className='table-row '>
-        <span>{`ocorreu um problema inesperado`}</span>
+        <span>{'occo'}</span>
       </div>
     ),
     noRegister: (
@@ -49,9 +80,48 @@ export default function Colaborador() {
       </div>
     ),
     data: (
-      <div className='table-row  '>
-        <span>data</span>
-      </div>
+      <>
+        {data?.data.map(({ id, apelido, telefone, celular, avatar }) => (
+          <div
+            key={id}
+            className='table-row '
+          >
+            <div className='table-cell border-b border-slate-100 dark:border-slate-700  pl-8 text-slate-500 dark:text-slate-400'>
+              <div>
+                <div className='absolute w-10 h-10 -mt-3 text-cyan-600 border bg-green-50 rounded-full'>
+                  {avatar ? (
+                    <Avatar.Root>
+                      <Avatar.Image
+                        className='rounded-full'
+                        src={`/api/avatar/${avatar}`}
+                      />
+                    </Avatar.Root>
+                  ) : (
+                    <PessoaIcon />
+                  )}
+                </div>
+                <span className='ml-14'>{apelido}</span>
+              </div>
+            </div>
+            <div className='hidden md:table-cell border-b border-slate-100 dark:border-slate-700 p-4 text-slate-500 dark:text-slate-400'>
+              {telefone}
+            </div>
+            <div className='hidden md:table-cell border-b border-slate-100 p-4  text-slate-500'>
+              {celular}
+            </div>
+            <div className='table-cell border-b border-slate-100  justify-end text-slate-500 '>
+              <div className='p-4 flex flex-row h-full justify-end gap-2'>
+                <Link href={`/controle/colaborador/${id}`}>
+                  <PencilSimple
+                    size={20}
+                    className='text-blue-600'
+                  />
+                </Link>
+              </div>
+            </div>
+          </div>
+        ))}
+      </>
     ),
   };
 
@@ -70,7 +140,11 @@ export default function Colaborador() {
   return (
     <Layout>
       <ListaPadrao title='Colaborador'>
-        <div className='relative bg-green-100 min-h-[320px] rounded-xl overflow-auto'>
+        <div
+          className={clsx('relative bg-green-100  rounded-xl overflow-auto', {
+            'min-h-[320px]': isLoadingResponse || data?.count === 0,
+          })}
+        >
           <div className='shadow-sm overflow-hidden my-8'>
             <div className='table border-collapse table-auto w-full text-sm'>
               <div className='table-header-group '>
@@ -79,10 +153,10 @@ export default function Colaborador() {
                     Nome
                   </div>
                   <div className='md:table-cell hidden border-b font-medium p-4 pt-0 pb-3 text-slate-400  text-left'>
-                    e-Mail
+                    Telefone
                   </div>
                   <div className='md:table-cell hidden border-b font-medium p-4 pt-0 pb-3 text-slate-400  text-left'>
-                    Status
+                    Celular
                   </div>
                   <div className='table-cell border-b font-medium p-4 pr-8 pt-1 pb-3 text-slate-400  text-left'>
                     <Link

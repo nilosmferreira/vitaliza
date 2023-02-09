@@ -51,8 +51,8 @@ export default async function getCroppedImg(
 
   // calculate bounding box of the rotated image
   const { width: bBoxWidth, height: bBoxHeight } = rotateSize(
-    image.width + 10,
-    image.height + 10,
+    image.width,
+    image.height,
     rotation
   );
 
