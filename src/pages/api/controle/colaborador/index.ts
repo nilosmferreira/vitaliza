@@ -1,9 +1,11 @@
 import { Colaborador } from '@/application/entities/colaborador';
+import { deletingS3Amazon } from '@/application/shared/deleting-image-s3-amazon';
 import { sendingS3Amazon } from '@/application/shared/sending-s3-amazon';
 import { RequestQuerySchema } from '@/helpers/request-query-schema';
 import prisma from '@/infra/database/prisma';
 import { PrismaColaboradoresRepository } from '@/infra/database/prisma/repositories/prisma-colaboradores-repository';
 import { ColaboradorViewModel } from '@/infra/http/colaborador-view-model';
+import { raw } from '@prisma/client/runtime';
 import formidable, { IncomingForm } from 'formidable';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
@@ -185,14 +187,17 @@ async function handle(req: NextApiRequest, res: NextApiResponse) {
             image: imageData,
           } = colaboradorSchema.parse(JSON.parse(String(fields['data'])));
           let fileName: string = '';
-
-          if (imageData) {
+          const rawColaborador = await repository.findById(id);
+          if (imageData && rawColaborador?.avatar !== imageData) {
             if (files['avatar']) {
               const myfiles = files['avatar'] as formidable.File[];
 
               const result = await sendingS3Amazon(myfiles[0]);
               fileName = result.fileName;
+              await deletingS3Amazon(String(rawColaborador?.avatar));
             }
+          } else if (imageData) {
+            fileName = imageData;
           }
           const colaborador = new Colaborador(
             {
@@ -215,6 +220,7 @@ async function handle(req: NextApiRequest, res: NextApiResponse) {
             },
             id
           );
+
           await repository.save(colaborador, id);
           const occupations = await prisma.occupation.findMany({
             where: {

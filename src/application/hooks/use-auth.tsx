@@ -68,8 +68,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       Router.push('/controle');
     } catch (error) {
+      console.log('error', error);
       if (error instanceof AxiosError)
         throw new Error(error.response?.data.message);
+      else if (error instanceof Error) throw new Error(error.message);
     }
   };
   return (

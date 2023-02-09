@@ -88,7 +88,7 @@ export default function Colaborador() {
           >
             <div className='table-cell border-b border-slate-100 dark:border-slate-700  pl-8 text-slate-500 dark:text-slate-400'>
               <div>
-                <div className='absolute w-10 h-10 -mt-3 text-cyan-600 border bg-green-50 rounded-full'>
+                <div className='absolute w-12 h-12 -mt-4 text-cyan-600 border bg-green-50 rounded-full'>
                   {avatar ? (
                     <Avatar.Root>
                       <Avatar.Image
@@ -100,7 +100,7 @@ export default function Colaborador() {
                     <PessoaIcon />
                   )}
                 </div>
-                <span className='ml-14'>{apelido}</span>
+                <span className='ml-16'>{apelido}</span>
               </div>
             </div>
             <div className='hidden md:table-cell border-b border-slate-100 dark:border-slate-700 p-4 text-slate-500 dark:text-slate-400'>

@@ -132,7 +132,6 @@ export default function ColaboradorCadEdit({
                   type: blobData.type,
                 })
               );
-              console.log(URL.createObjectURL(blobData));
             });
         }
       } catch (error) {}
@@ -256,6 +255,7 @@ export default function ColaboradorCadEdit({
             type: 'success',
             message: 'Gravado com sucesso!',
           });
+          queryClient.invalidateQueries(['lista-colaborador']);
         },
         onError: (e) => {
           if (e instanceof Error)
