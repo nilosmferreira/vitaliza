@@ -22,54 +22,6 @@ async function main() {
       createdAt: new Date(),
     },
   });
-  await prisma.user.upsert({
-    where: {
-      email: 'affinijr@gmail.com',
-    },
-    update: {
-      firstName: 'Antônio',
-    },
-    create: {
-      id: randomUUID(),
-      firstName: 'Antônio',
-      lastName: 'Affini',
-      userName: 'affini',
-      password: hashSync('vitaliza02', 13),
-      email: 'affinijr@gmail.com',
-      createdAt: new Date(),
-    },
-  });
-
-  await prisma.kindOfPerson.upsert({
-    where: {
-      name: 'colaborador',
-    },
-    update: {},
-    create: {
-      id: randomUUID(),
-      name: 'colaborador',
-    },
-  });
-  await prisma.kindOfPerson.upsert({
-    where: {
-      name: 'atleta',
-    },
-    update: {},
-    create: {
-      id: randomUUID(),
-      name: 'atleta',
-    },
-  });
-  await prisma.kindOfPerson.upsert({
-    where: {
-      name: 'responsavel',
-    },
-    update: {},
-    create: {
-      id: randomUUID(),
-      name: 'responsavel',
-    },
-  });
 }
 
 main()
