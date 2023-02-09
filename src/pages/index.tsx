@@ -1,6 +1,6 @@
 import { Button } from '@/components/form/button';
 import { TextInput } from '@/components/form/text-input';
-import { Eye, EyeClosed, Lock } from 'phosphor-react';
+import { Eye, EyeSlash } from 'phosphor-react';
 import { useContext, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -8,9 +8,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AuthContext } from '@/application/hooks/use-auth';
 import { Toast } from '@/components/toast';
 import { useRouter } from 'next/router';
-import LogoSVG from '../../public/logo.svg';
-import Image from 'next/image';
 import { Logo } from '@/components/logo';
+import { Label } from '@/components/form/label';
+import { CheckBox } from '@/components/form/checkbox';
 
 const formDataSchema = z.object({
   usuario: z
@@ -26,6 +26,7 @@ const formDataSchema = z.object({
 });
 export default function Home() {
   const [showPassword, setShowPassword] = useState(false);
+  const [lembrar, setLembrar] = useState(false);
   const [error, setError] = useState<string>();
   const { replace } = useRouter();
   const { signIn } = useContext(AuthContext);
@@ -55,7 +56,6 @@ export default function Home() {
           <div className='w-12 h-12 bg-white ring-4 ring-green-50 text-green-700 rounded-full'>
             <Logo />
           </div>
-          {/* <Lock className='w-12 h-12 bg-white ring-4 ring-green-50 text-green-700 rounded-full' /> */}
         </div>
         <form
           onSubmit={handleOnSubmit}
@@ -63,12 +63,7 @@ export default function Home() {
         >
           <div className='p-6 space-y-3'>
             <div className='space-y-1'>
-              <label
-                htmlFor='usuario'
-                className='text-sm text-gray-600'
-              >
-                Usuário
-              </label>
+              <Label htmlFor='usuario'>Usuário</Label>
               <TextInput.Root error={errors['usuario']}>
                 <TextInput.Input
                   type='text'
@@ -77,12 +72,7 @@ export default function Home() {
               </TextInput.Root>
             </div>
             <div className='space-y-1'>
-              <label
-                htmlFor='usuario'
-                className='text-sm text-gray-600 mb-2'
-              >
-                Senha
-              </label>
+              <Label htmlFor='usuario'>Senha</Label>
               <TextInput.Root error={errors['senha']}>
                 <TextInput.Input
                   {...register('senha')}
@@ -92,28 +82,20 @@ export default function Home() {
                   {showPassword ? (
                     <Eye onClick={() => setShowPassword(false)} />
                   ) : (
-                    <EyeClosed onClick={() => setShowPassword(true)} />
+                    <EyeSlash onClick={() => setShowPassword(true)} />
                   )}
                 </TextInput.Icon>
               </TextInput.Root>
             </div>
             <div className='flex flex-row items-center justify-between '>
-              <div className='flex justify-center items-center'>
-                <input
-                  type='checkbox'
-                  name='permite'
-                  id='permite'
-                  className='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-0'
-                />
-                <label
-                  htmlFor='permite'
-                  className='text-sm ml-1'
-                >
-                  Lembrar o usuário
-                </label>
-              </div>
+              <CheckBox
+                state={lembrar}
+                changeState={setLembrar}
+              >
+                Lembrar o usuário
+              </CheckBox>
               <a
-                href='#'
+                href='/esqueceusenha'
                 className='text-sm text-blue-500 hover:text-blue-700 transition-colors delay-75 focus:outline-none  rounded-md focus:ring-blue-500 focus:ring-1'
               >
                 Esqueci a senha?
