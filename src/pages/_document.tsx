@@ -5,7 +5,6 @@ export default function Document() {
   return (
     <Html lang='en'>
       <Head>
-        <title>Instituto Vitaliza</title>
         <link
           rel='icon'
           type='image/svg+xml'
