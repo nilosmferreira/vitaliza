@@ -3,16 +3,12 @@ import { z } from 'zod';
 export const RequestQuerySchema = z.object({
   limit: z
     .string()
-    .nullish()
-    .transform((value) => {
-      return value ? +value : 10;
-    }),
+    .optional()
+    .transform((value) => (value ? +value : undefined)),
   offset: z
     .string()
-    .nullish()
-    .transform((value) => {
-      return value ? +value : 0;
-    }),
+    .optional()
+    .transform((value) => (value ? +value : undefined)),
 });
 export const config = {
   api: {

@@ -1,3 +1,4 @@
+import { FindMany } from '@/application/dtos/find-many';
 import { Usuario } from '@/application/entities/usuario';
 import { UsuariosRepository } from '@/application/repositories/usuarios-repository';
 import prisma from '../../prisma';
@@ -9,13 +10,26 @@ export class PrismaUsuariosRepository implements UsuariosRepository {
       data: PrismaUsuariosMapper.toPrisma(usuario),
     });
   }
-  async find(): Promise<Usuario[]> {
-    const results = await prisma.user.findMany({});
+  async find({
+    take,
+    skip,
+  }: FindMany): Promise<{ results: Usuario[]; count: number }> {
+    const results = await prisma.user.findMany({
+      take,
+      skip,
+    });
     if (results) {
-      return results.map((user) => PrismaUsuariosMapper.toDomain(user));
+      const usuarios = results.map((user) =>
+        PrismaUsuariosMapper.toDomain(user)
+      );
+      const count = await prisma.user.count();
+      return {
+        results: usuarios,
+        count,
+      };
     } else {
       const usuarios: Usuario[] = [];
-      return usuarios;
+      return { results: usuarios, count: 0 };
     }
   }
   async findById(id: string): Promise<Usuario | null> {

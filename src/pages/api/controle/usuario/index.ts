@@ -84,7 +84,7 @@ export default async function Usuarios(
           take: limit,
           skip: offset,
           orderBy: {
-            createdAt: 'desc',
+            firstName: 'desc',
           },
         });
         const count = await prisma.user.count();
