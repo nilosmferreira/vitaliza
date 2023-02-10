@@ -51,7 +51,7 @@ export default function Home() {
   });
   return (
     <div className='h-screen w-screen bg-green-50 flex items-center justify-center'>
-      <div className='relative container md:w-96 min-w-[320px]'>
+      <div className='relative container max-w-[350px]'>
         <div className='absolute -top-6 flex items-center justify-center  w-full'>
           <div className='w-12 h-12 bg-white ring-4 ring-green-50 text-green-700 rounded-full'>
             <Logo />

@@ -30,6 +30,18 @@ export class PrismaUsuariosRepository implements UsuariosRepository {
       return null;
     }
   }
+  async findByUsername(username: string): Promise<Usuario | null> {
+    const user = await prisma.user.findUnique({
+      where: {
+        userName: username,
+      },
+    });
+    if (user) {
+      return PrismaUsuariosMapper.toDomain(user);
+    } else {
+      return null;
+    }
+  }
   async findByEmail(email: string): Promise<Usuario | null> {
     const user = await prisma.user.findUnique({
       where: {
