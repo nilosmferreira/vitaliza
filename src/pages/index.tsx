@@ -95,7 +95,7 @@ export default function Home() {
                 Lembrar o usuário
               </CheckBox>
               <a
-                href='/esqueceusenha'
+                href='/usuario/senha/esqueceu'
                 className='text-sm text-blue-500 hover:text-blue-700 transition-colors delay-75 focus:outline-none  rounded-md focus:ring-blue-500 focus:ring-1'
               >
                 Esqueci a senha?
