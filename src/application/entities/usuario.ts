@@ -39,6 +39,9 @@ export class Usuario extends EntityBase<UsuarioData> {
   get senha() {
     return this.data.senha;
   }
+  set senha(value: string) {
+    this.data.senha = value;
+  }
   get email() {
     return this.data.email;
   }
