@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { SpinnerGap } from 'phosphor-react';
 
 interface UsuarioData {
-  data: {
+  results: {
     firstName: string;
     lastName: string;
     email: string;
@@ -38,10 +38,10 @@ export function DashboardUsuarios() {
               </span>
             </p>
             <ul>
-              {data.data?.map(({ id, firstName, lastName, email }, index) => (
+              {data.results.map(({ id, firstName, lastName, email }, index) => (
                 <li
                   key={id}
-                  className='flex items-center justify-between py-3 text-gray-600 border-b-2 border-green-100 odd:bg-green-50'
+                  className='flex items-center justify-between py-3 text-gray-600 border-b-2 border-green-100 even:bg-green-50'
                 >
                   <div className='flex items-center justify-start text-sm'>
                     <span className='mx-4'>

@@ -1,6 +1,7 @@
 import { sendingS3Amazon } from '@/application/shared/sending-s3-amazon';
 import { RequestQuerySchema } from '@/helpers/request-query-schema';
 import prisma from '@/infra/database/prisma';
+import { FindUsersController } from '@/infra/http/controllers/users/find-users-controller';
 import { hashSync } from 'bcrypt';
 import formidable from 'formidable';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -80,24 +81,8 @@ export default async function Usuarios(
           return res.status(201).end();
         } catch (error) {}
       case 'GET':
-        const users = await prisma.user.findMany({
-          take: limit,
-          skip: offset,
-          orderBy: {
-            firstName: 'desc',
-          },
-        });
-        const count = await prisma.user.count();
-        return res.status(200).json({
-          data: users.map(
-            ({ firstName, lastName, createdAt, deletedAt, email, id }) => {
-              return { firstName, lastName, email, createdAt, deletedAt, id };
-            }
-          ),
-          limit,
-          offset,
-          count,
-        });
+        await FindUsersController.handle(req, res);
+        break;
       case 'PUT':
         const updateUserData = z.object({
           firstName: z.string({

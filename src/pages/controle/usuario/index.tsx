@@ -17,7 +17,7 @@ import {
 import { useState } from 'react';
 
 interface UsuarioData {
-  data: {
+  results: {
     firstName: string;
     lastName: string;
     email: string;
@@ -54,8 +54,9 @@ export default function Usuario() {
           limit: perPage,
         },
       });
+      console.log(data);
       setOffset(position);
-      const users = data.data.map((user) => {
+      const users = data.results.map((user) => {
         return {
           id: user.id,
           name: `${user.firstName} ${user.lastName}`,
