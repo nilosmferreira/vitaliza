@@ -8,29 +8,19 @@ import { Label } from '../form/label';
 import { TextInput } from '../form/text-input';
 import { z } from 'zod';
 import { Button } from '../form/button';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/infra/axios';
 import { useRouter } from 'next/router';
-import { Loading } from '../loading';
 import clsx from 'clsx';
 import * as Dialog from '@radix-ui/react-dialog';
 import { PessoaIcon } from '../icons/pessoa-icon';
-import {
-  ChangeEventHandler,
-  Fragment,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { ChangeEventHandler, useEffect, useRef, useState } from 'react';
 import { ArrowsClockwise, TrashSimple, X } from 'phosphor-react';
 import getCroppedImg, {
   GetCroppedImgResponse,
 } from '@/application/shared/crop-image';
+import { Toast } from '../toast';
 
-interface EditUserProps {
-  id: string;
-}
 const dataSchema = z.object({
   firstName: z.string({
     required_error: 'Campo é obrigatório',
@@ -52,8 +42,19 @@ const dataSchema = z.object({
     }),
 });
 type updateData = z.infer<typeof dataSchema>;
+interface User {
+  firstName: string;
+  lastName: string;
+  email: string;
+  avatar: string | null;
+}
 export function EditUser() {
   const [isOpen, setIsOpen] = useState(false);
+  const [message, setMessage] = useState<{
+    type: 'error' | 'success';
+    message: string;
+  }>();
+
   const [image, setImage] = useState<File>();
   const [croppedArea, setCroppedArea] = useState<Area | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -62,6 +63,7 @@ export function EditUser() {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [user, setUser] = useState<User>();
 
   const [imageCroped, setImageCroped] = useState<GetCroppedImgResponse | null>(
     null
@@ -91,6 +93,27 @@ export function EditUser() {
   let id: string;
   id = String(type);
 
+  useEffect(() => {
+    api
+      .get<updateData>(`/api/controle/usuario/encontrar/id/${id}`)
+      .then(({ data }) => {
+        if (data) {
+          setUser({
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            avatar: data.avatar,
+          });
+        }
+      })
+      .catch((error) => {
+        if (error instanceof Error)
+          setMessage({
+            type: 'error',
+            message: error.message,
+          });
+      });
+  }, [id]);
   const { mutate, isLoading: loadingMutation } = useMutation({
     mutationFn: (data: FormData) => {
       return api.put('/api/controle/usuario', data, {
@@ -99,59 +122,18 @@ export function EditUser() {
         },
       });
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: () => {
       queryClient.invalidateQueries(['user']);
-    },
-  });
-
-  const { isLoading, data } = useQuery({
-    queryKey: [`user`],
-    queryFn: async () => {
-      try {
-        const { data } = await api.get<updateData>(
-          `/api/controle/usuario/encontrar/id/${id}`
-        );
-        return {
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          avatar: data.avatar,
-        };
-      } catch (error) {
-        return null;
-      }
     },
   });
 
   const {
     register,
     handleSubmit,
-    setValue,
-    setFocus,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<z.infer<typeof dataSchema>>({
     resolver: zodResolver(dataSchema),
   });
-
-  if (isLoading) {
-    return (
-      <div className='container mx-auto px-2 sm:px-4 max-w-3xl '>
-        <div
-          className={clsx(
-            'relative h-container flex flex-col justify-between bg-white shadow-lg rounded-lg',
-            'overflow-hidden fill-green-600 items-center p-10'
-          )}
-        >
-          <Loading />
-        </div>
-      </div>
-    );
-  }
-  if (data) {
-    setValue('email', data?.email);
-    setValue('firstName', data?.firstName);
-    setValue('lastName', data?.lastName);
-  }
 
   const onSelectFile: ChangeEventHandler<HTMLInputElement> = (event) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -173,17 +155,41 @@ export function EditUser() {
       );
     }
     mutate(form, {
-      onSuccess: (data) => {
-        console.log(data);
+      onSuccess: () => {
+        setMessage({
+          type: 'success',
+          message: 'Gravado com sucesso!',
+        });
       },
       onError: (e) => {
-        console.log(e);
+        if (e instanceof Error)
+          setMessage({
+            type: 'error',
+            message: e.message,
+          });
       },
     });
   });
+  const handleCloseToast = () => {
+    setMessage(undefined);
+  };
 
   return (
     <div className='container mx-auto px-2 sm:px-4 max-w-3xl '>
+      <Toast
+        open={message !== undefined}
+        title={'Alteração'}
+        handleClose={handleCloseToast}
+      >
+        <span
+          className={clsx('font-bold text-lg p-2', {
+            'text-red-700': message?.type === 'error',
+            'text-green-700': message?.type === 'success',
+          })}
+        >
+          {message?.message}
+        </span>
+      </Toast>
       <h1 className='font-medium py-2'>Atualizar Usuário</h1>
       <input
         type='file'
@@ -202,13 +208,13 @@ export function EditUser() {
           <div className='mt-4 flex items-center justify-center  w-full cursor-pointer'>
             <DropdownMenuPrimitive.Trigger asChild>
               <div className='w-20 h-20 text-cyan-800 border bg-green-50 rounded-full'>
-                {(imageCroped && imageCroped.file) || data?.avatar ? (
+                {(imageCroped && imageCroped.file) || user?.avatar ? (
                   <Avatar.Root>
                     <Avatar.AvatarImage
                       src={
                         imageCroped?.file
                           ? URL.createObjectURL(imageCroped.file)
-                          : `/api/avatar/${data?.avatar}`
+                          : `/api/avatar/${user?.avatar}`
                       }
                       className='rounded-full'
                     />
@@ -261,7 +267,9 @@ export function EditUser() {
               <Label htmlFor='firstName'>Primeiro Nome</Label>
               <TextInput.Root error={errors['firstName']}>
                 <TextInput.Input
-                  {...register('firstName')}
+                  {...register('firstName', {
+                    value: user?.firstName,
+                  })}
                   type='text'
                 />
               </TextInput.Root>
@@ -270,7 +278,7 @@ export function EditUser() {
               <Label htmlFor='lastName'>Sobrenome</Label>
               <TextInput.Root error={errors['lastName']}>
                 <TextInput.Input
-                  {...register('lastName')}
+                  {...register('lastName', { value: user?.lastName })}
                   type='text'
                 />
               </TextInput.Root>
@@ -281,7 +289,7 @@ export function EditUser() {
             <TextInput.Root error={errors['email']}>
               <TextInput.Input
                 disabled
-                {...register('email')}
+                {...register('email', { value: user?.email })}
                 type='email'
               />
             </TextInput.Root>

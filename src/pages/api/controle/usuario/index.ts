@@ -2,11 +2,19 @@ import { sendingS3Amazon } from '@/application/shared/sending-s3-amazon';
 import { RequestQuerySchema } from '@/helpers/request-query-schema';
 import prisma from '@/infra/database/prisma';
 import { FindUsersController } from '@/infra/http/controllers/users/find-users-controller';
+import { PutUserController } from '@/infra/http/controllers/users/put-user-controller';
+
 import { hashSync } from 'bcrypt';
 import formidable from 'formidable';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 export default async function Usuarios(
   req: NextApiRequest,
@@ -84,64 +92,7 @@ export default async function Usuarios(
         await FindUsersController.handle(req, res);
         break;
       case 'PUT':
-        const updateUserData = z.object({
-          firstName: z.string({
-            required_error: 'Campo é obrigatório',
-          }),
-          lastName: z.string({
-            required_error: 'Campo é obrigatório',
-          }),
-          email: z
-            .string({
-              required_error: 'Campo é obrigatório',
-            })
-            .email({
-              message: 'Não é um e-mail válido',
-            }),
-        });
-
-        const form = new formidable.IncomingForm();
-        form.parse(req, async (error, fields, files) => {
-          if (error) {
-            return res.status(400).json(error);
-          }
-          if (fields['data']) {
-            const { firstName, lastName, email } = updateUserData.parse(
-              JSON.parse(String(fields['data']))
-            );
-            let avatar: string = '';
-            if (files['avatar']) {
-              const file = files['avatar'] as formidable.File;
-              const result = await sendingS3Amazon(file);
-              avatar = result.fileName;
-            }
-
-            if (avatar.length > 0) {
-              await prisma.user.update({
-                where: {
-                  email,
-                },
-                data: {
-                  firstName,
-                  lastName,
-                  avatar,
-                },
-              });
-            } else {
-              await prisma.user.update({
-                where: {
-                  email,
-                },
-                data: {
-                  firstName,
-                  lastName,
-                },
-              });
-            }
-          }
-
-          return res.status(201).end();
-        });
+        await PutUserController.handle(req, res);
         return res.status(201).end();
     }
   } catch (error) {

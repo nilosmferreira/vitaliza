@@ -112,11 +112,6 @@ export default function ColaboradorCadEdit({
       if (colaborador?.cargos) setSelectedCargos(colaborador?.cargos);
       try {
         if (colaborador?.avatar) {
-          // api
-          //   .get(`/api/avatar/${colaborador.avatar}`)
-          //   .then((response) => console.log(response.data))
-          //   .catch((error) => console.error(error));
-          // .then((res) => console.log(res.data));
           fetch(`/api/avatar/${colaborador.avatar}`, {
             method: 'GET',
             headers: {
@@ -136,7 +131,7 @@ export default function ColaboradorCadEdit({
         }
       } catch (error) {}
     }
-  }, [isAdd]);
+  }, [colaborador?.avatar, colaborador?.cargos, isAdd]);
   const {
     register,
     setValue,

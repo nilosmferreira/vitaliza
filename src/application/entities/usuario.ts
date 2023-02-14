@@ -30,8 +30,14 @@ export class Usuario extends EntityBase<UsuarioData> {
   get primeiroNome() {
     return this.data.primeiroNome;
   }
+  set primeiroNome(value: string) {
+    this.data.primeiroNome = value;
+  }
   get ultimoNome() {
     return this.data.ultimoNome;
+  }
+  set ultimoNome(value: string) {
+    this.data.ultimoNome = value;
   }
   get nome() {
     return this.data.nome;
@@ -47,6 +53,9 @@ export class Usuario extends EntityBase<UsuarioData> {
   }
   get avatar() {
     return this.data.avatar;
+  }
+  set avatar(value: string | null) {
+    this.data.avatar = value;
   }
   get criadoEm() {
     return this.data.criadoEm;
